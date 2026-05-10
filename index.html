@@ -256,8 +256,8 @@
                 <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-white/60">
                     <h3 class="text-xl md:text-2xl font-black flex items-center gap-3 text-slate-800">
                         <div class="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl shadow-inner border border-purple-200">
-                            <i data-lucide="message-circle" class="text-white w-6 h-6"></i>
-                        </div>
+                            <i data-lucide="message-circle" class="text-white w-6 h-6">
+                        </i></div>
                         Sembang Cikgu AI
                     </h3>
                 </div>
@@ -381,7 +381,7 @@
     </div>
 
     <script>
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbx9ascM7f3r-X99smPKpyXJT22ftoz0ZTkBsBWMStwUJo_Sckr-j3rT5DewvyNgmCIgzA/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxHSw4fN1S3-V1rl6r1tmtQ5oXXwb-f4zYalfvzT9HbVynMCTh7NMquaVgVPm8Hzwechg/exec";
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -404,7 +404,8 @@
             playerName: localStorage.getItem('playerName') || '',
             points: parseInt(localStorage.getItem('points')) || 0,
             petLevel: parseInt(localStorage.getItem('petLevel')) || 0,
-            noteGenerated: false
+            noteGenerated: false,
+            attempts: 0
         };
 
         const PET_STAGES = [
@@ -877,6 +878,7 @@
             document.getElementById('inlineRobotHint').classList.add('hidden');
             
             state.noteGenerated = false;
+            state.attempts = 0;
             document.getElementById('noteArea').classList.add('hidden');
             const btnNote = document.getElementById('btnGenerateNote');
             btnNote.disabled = false;
@@ -1009,6 +1011,41 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             lucide.createIcons();
         }
 
+        async function generateClue(wrongIndex) {
+            const question = state.currentQuiz.soalan;
+            const wrongAnswer = state.currentQuiz.pilihan[wrongIndex];
+
+            const prompt = `Soalan: ${question}\nJawapan Murid (Salah): ${wrongAnswer}\n\nSebagai Cikgu AI yang penyayang, murid menjawab salah pada percubaan pertama. JANGAN dedahkan jawapan sebenar. Berikan satu petunjuk (clue) ringkas untuk membimbing murid berfikir semula. Gaya bahasa santai seperti bercakap dengan kanak-kanak. (Maksimum 2 ayat). Letak emoji.`;
+
+            try {
+                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${state.apiKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: "llama-3.3-70b-versatile",
+                        messages: [{ role: "user", content: prompt }],
+                        temperature: 0.5,
+                        max_tokens: 256
+                    })
+                });
+                
+                if (!response.ok) throw new Error("Ralat hint");
+
+                const data = await response.json();
+                const clue = data.choices[0].message.content;
+                document.getElementById('inlineRobotText').innerHTML = `<span class="text-amber-600 font-black mb-1 block"><i data-lucide="lightbulb" class="w-5 h-5 inline"></i> Petunjuk:</span>${clue}`;
+                appendChat('bot', "Ops, kurang tepat! Cikgu ada berikan petunjuk di bawah soalan, cuba fikir semula dan pilih jawapan lain ya! 🤔");
+            } catch (error) {
+                console.error("Ralat Clue:", error);
+                document.getElementById('inlineRobotText').innerHTML = `<span class="text-amber-600 font-black mb-1 block"><i data-lucide="lightbulb" class="w-5 h-5 inline"></i> Petunjuk:</span>Jawapan <b>${wrongAnswer}</b> kurang tepat. Mari baca soalan semula dengan teliti dan cuba satu lagi pilihan jawapan! 💪`;
+                appendChat('bot', "Ops, kurang tepat! Cuba baca semula soalan dan pilih jawapan lain. 💪");
+            }
+            lucide.createIcons();
+        }
+
         async function handleAnswer(selectedIndex, btnElement) {
             if (state.isProcessing || btnElement.disabled) return;
             
@@ -1033,7 +1070,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 btnElement.style.borderColor = '#4ade80';
                 btnElement.classList.add('shadow-2xl', 'transform', 'scale-[1.03]');
                 
-                let earnedPoints = 10;
+                let earnedPoints = state.attempts === 0 ? 10 : 5;
                 state.points += earnedPoints;
                 localStorage.setItem('points', state.points);
                 updateHeaderUI();
@@ -1059,52 +1096,72 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 lucide.createIcons();
                 state.isProcessing = false;
             } else {
-                // Jika salah, terus bantu paparkan jawapan sebenar
-                state.isProcessing = true;
+                state.attempts++;
                 
-                if(!state.answeredTopics.includes(state.currentTopic)) {
-                    state.answeredTopics.push(state.currentTopic);
+                if (state.attempts === 1) {
+                    // First wrong attempt: Show Clue
+                    state.isProcessing = true;
+                    
+                    btnElement.style.background = 'rgba(254, 202, 202, 0.8)';
+                    btnElement.style.borderColor = '#f87171';
+                    btnElement.classList.add('opacity-60', 'animate-shake');
+                    setTimeout(() => btnElement.classList.remove('animate-shake'), 400);
+                    btnElement.disabled = true;
+                    
+                    punishPet();
+
+                    inlineRobotHint.classList.remove('hidden');
+                    inlineRobotText.innerHTML = '<span class="animate-pulse text-indigo-600">Cikgu AI sedang menyediakan petunjuk... 🧐</span>';
+                    
+                    await generateClue(selectedIndex);
+                    
+                    state.isProcessing = false;
+                } else {
+                    // Second wrong attempt: Show Answer and Hint
+                    state.isProcessing = true;
+                    
+                    if(!state.answeredTopics.includes(state.currentTopic)) {
+                        state.answeredTopics.push(state.currentTopic);
+                    }
+                    
+                    btnElement.style.background = 'rgba(254, 202, 202, 0.8)';
+                    btnElement.style.borderColor = '#f87171';
+                    btnElement.classList.add('opacity-60', 'animate-shake');
+                    setTimeout(() => btnElement.classList.remove('animate-shake'), 400);
+                    
+                    const allBtns = document.querySelectorAll('.option-btn');
+                    const correctBtn = allBtns[state.currentQuiz.jawapan_betul];
+                    correctBtn.style.background = 'rgba(187, 247, 208, 0.95)';
+                    correctBtn.style.borderColor = '#4ade80';
+                    correctBtn.classList.add('shadow-2xl', 'transform', 'scale-[1.03]', 'ring-4', 'ring-emerald-300');
+
+                    allBtns.forEach(b => {
+                        b.disabled = true;
+                        b.classList.remove('hover:bg-white', 'hover:shadow-2xl');
+                        if(b !== btnElement && b !== correctBtn && !b.style.background.includes('254')) b.classList.add('opacity-40');
+                    });
+                    
+                    punishPet();
+
+                    inlineRobotHint.classList.remove('hidden');
+                    inlineRobotText.innerHTML = '<span class="animate-pulse text-indigo-600">Cikgu AI sedang menulis penerangan untuk jawapan sebenar... 📝</span>';
+                    
+                    await generateHint(selectedIndex);
+                    
+                    const feedbackArea = document.getElementById('feedbackArea');
+                    const feedbackHeader = document.getElementById('feedbackHeader');
+                    const feedbackText = document.getElementById('feedbackText');
+                    
+                    feedbackArea.classList.remove('hidden', 'border-emerald-400', 'bg-emerald-50/95');
+                    feedbackArea.classList.add('border-rose-300', 'bg-rose-50/95');
+                    feedbackHeader.innerHTML = `<div class="p-2 bg-rose-200 rounded-full"><i data-lucide="info" class="w-8 h-8 text-rose-700"></i></div> <span class="text-rose-800">Mari Belajar Bersama!</span>`;
+                    feedbackText.className = "text-rose-800 font-bold text-xl md:text-2xl leading-relaxed mb-8";
+                    feedbackText.textContent = `Pilihan anda kurang tepat kali ini, jadi anda mendapat 0 mata. Sila baca penerangan Cikgu AI dan klik butang di bawah untuk soalan seterusnya.`;
+                    
+                    saveScoreToGAS();
+                    lucide.createIcons();
+                    state.isProcessing = false;
                 }
-                
-                // Highlight butang salah
-                btnElement.style.background = 'rgba(254, 202, 202, 0.8)';
-                btnElement.style.borderColor = '#f87171';
-                btnElement.classList.add('opacity-60', 'animate-shake');
-                setTimeout(() => btnElement.classList.remove('animate-shake'), 400);
-                
-                // Highlight butang jawapan betul
-                const allBtns = document.querySelectorAll('.option-btn');
-                const correctBtn = allBtns[state.currentQuiz.jawapan_betul];
-                correctBtn.style.background = 'rgba(187, 247, 208, 0.95)';
-                correctBtn.style.borderColor = '#4ade80';
-                correctBtn.classList.add('shadow-2xl', 'transform', 'scale-[1.03]', 'ring-4', 'ring-emerald-300');
-
-                allBtns.forEach(b => {
-                    b.disabled = true;
-                    b.classList.remove('hover:bg-white', 'hover:shadow-2xl');
-                    if(b !== btnElement && b !== correctBtn) b.classList.add('opacity-40');
-                });
-                
-                punishPet();
-
-                inlineRobotHint.classList.remove('hidden');
-                inlineRobotText.innerHTML = '<span class="animate-pulse text-indigo-600">Cikgu AI sedang menulis penerangan untuk jawapan sebenar... 📝</span>';
-                
-                await generateHint(selectedIndex);
-                
-                const feedbackArea = document.getElementById('feedbackArea');
-                const feedbackHeader = document.getElementById('feedbackHeader');
-                const feedbackText = document.getElementById('feedbackText');
-                
-                feedbackArea.classList.remove('hidden', 'border-emerald-400', 'bg-emerald-50/95');
-                feedbackArea.classList.add('border-rose-300', 'bg-rose-50/95');
-                feedbackHeader.innerHTML = `<div class="p-2 bg-rose-200 rounded-full"><i data-lucide="info" class="w-8 h-8 text-rose-700"></i></div> <span class="text-rose-800">Mari Belajar Bersama!</span>`;
-                feedbackText.className = "text-rose-800 font-bold text-xl md:text-2xl leading-relaxed mb-8";
-                feedbackText.textContent = `Pilihan anda kurang tepat kali ini, jadi anda mendapat 0 mata. Sila baca penerangan Cikgu AI dan klik butang di bawah untuk soalan seterusnya.`;
-                
-                saveScoreToGAS();
-                lucide.createIcons();
-                state.isProcessing = false;
             }
         }
 
