@@ -17,7 +17,7 @@
         .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
 
-        /* Animasi Naga Baru */
+        /* Animasi Anak Ayam Baru */
         .animate-dance { animation: dance 2s infinite ease-in-out; display: inline-block; }
         @keyframes dance { 
             0%, 100% { transform: rotate(-5deg) translateY(0); } 
@@ -99,7 +99,7 @@
 </head>
 <body class="bg-gradient-to-br from-indigo-100 via-fuchsia-50 to-cyan-100 min-h-screen text-slate-800 font-sans flex flex-col">
 
-    <!-- Pet Container (Draggable Dragon) -->
+    <!-- Pet Container (Draggable Chick) -->
     <div id="petContainer" class="fixed bottom-4 left-2 md:left-10 z-50 flex flex-col items-center justify-end h-72 w-56 cursor-grab touch-none pointer-events-auto">
         <div id="petSpeech" class="absolute top-4 opacity-0 bg-white/95 backdrop-blur px-5 py-3 rounded-2xl rounded-bl-none text-xl font-black text-slate-700 shadow-xl border-2 border-indigo-100 transition-all duration-500 transform translate-y-4 z-20 whitespace-nowrap">
             Nyam! +1 😋
@@ -148,7 +148,7 @@
                     <i data-lucide="rocket" class="w-20 h-20 text-indigo-500"></i>
                 </div>
                 <h2 class="text-4xl md:text-6xl font-black mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Bersedia untuk Belajar?</h2>
-                <p class="text-slate-600 mb-12 font-medium text-xl md:text-2xl">Uji minda anda bersama Cikgu AI, kumpul mata, bela naga comel, dan jadi juara!</p>
+                <p class="text-slate-600 mb-12 font-medium text-xl md:text-2xl">Uji minda anda bersama Cikgu AI, kumpul mata, bela anak ayam comel, dan jadi juara!</p>
                 
                 <div class="max-w-2xl mx-auto space-y-8">
                     <div>
@@ -363,7 +363,7 @@
     </div>
 
     <script>
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbx1mRPD0n6GCzrf2MZLGX5tENXVy9woCdaTu7olAdqVmnYNOoEtZ9_CIdBlyoL-BouRnQ/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxkenFUkoDuUBXJoLhmZuUnzzXla4ZmJb9D2AwXCelO8_bYqW38dyK2AuLUN72bRyYJMg/exec";
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -390,11 +390,11 @@
             currentAttempts: 0
         };
 
-        // Menjana Peringkat Naga 0-32
+        // Menjana Peringkat Anak Ayam 0-32
         const PET_STAGES = [
             { level: 0, emoji: '🥚', scale: 1.0 },
-            { level: 1, emoji: '🥚', scale: 1.1 },
-            { level: 2, emoji: '🥚', scale: 1.2 }
+            { level: 1, emoji: '🐣', scale: 1.05 },
+            { level: 2, emoji: '🐣', scale: 1.1 }
         ];
         for (let i = 3; i <= 32; i++) {
             PET_STAGES.push({ level: i, emoji: '🐥', scale: 1.0 + ((i - 3) * 0.05) });
@@ -498,7 +498,7 @@
             foodEl.classList.add('opacity-100', 'translate-y-0');
             
             let speechTxt = "Nyam! +1 😋";
-            if (state.petLevel === 3) speechTxt = "Yay! Menetas! 🐉";
+            if (state.petLevel === 3) speechTxt = "Yay! Menetas! 🐥";
             
             speechEl.textContent = speechTxt;
             speechEl.classList.remove('opacity-0', 'translate-y-4');
@@ -816,7 +816,7 @@
 
                 if (state.answeredTopics.length > 0 && state.answeredTopics.length < state.questions.length) {
                     showCustomConfirm("Sambung Sesi?", 
-                        `Sistem merekodkan anda telah menjawab ${state.answeredTopics.length} soalan sebelum ini. Mahu sambung sesi lepas atau mulakan sesi pusingan baru? (Markah dan Naga kekal).`,
+                        `Sistem merekodkan anda telah menjawab ${state.answeredTopics.length} soalan sebelum ini. Mahu sambung sesi lepas atau mulakan sesi pusingan baru? (Markah dan Anak Ayam kekal).`,
                         "Mula Baru", "Sambung Sesi", 
                         () => {
                             state.answeredTopics = [];
@@ -1032,9 +1032,9 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 feedbackArea.classList.add('border-emerald-400', 'bg-emerald-50/95');
                 feedbackHeader.innerHTML = `<div class="p-3 bg-emerald-200 rounded-full"><i data-lucide="check-circle-2" class="w-10 h-10 text-emerald-700"></i></div> <span class="text-emerald-800">Hebat Sekali!</span>`;
                 feedbackText.className = "text-emerald-800 font-bold text-2xl md:text-3xl leading-relaxed mb-10";
-                feedbackText.textContent = `Tahniah! Jawapan anda adalah betul. Anda berjaya mengumpul +${earnedPoints} mata. Anak naga anda semakin membesar!`;
+                feedbackText.textContent = `Tahniah! Jawapan anda adalah betul. Anda berjaya mengumpul +${earnedPoints} mata. Anak ayam anda semakin membesar!`;
                 
-                appendChat('bot', `Tahniah ${state.playerName}! Jawapan betul. Anda dapat +${earnedPoints} mata dan anak naga anda sangat gembira! 🎉 Teruskan usaha!`);
+                appendChat('bot', `Tahniah ${state.playerName}! Jawapan betul. Anda dapat +${earnedPoints} mata dan anak ayam anda sangat gembira! 🎉 Teruskan usaha!`);
 
                 lucide.createIcons();
                 state.isProcessing = false;
@@ -1084,7 +1084,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 const data = await response.json();
                 const hint = data.choices[0].message.content;
                 document.getElementById('inlineRobotText').innerHTML = hint + " <br><span class='text-indigo-500 font-extrabold text-xl mt-4 inline-block'>Sila cuba pilihan yang lain! 👇</span>";
-                appendChat('bot', "Ops, naga tak suka tu. Cuba semak klu yang saya berikan di kotak soalan. Awak pasti boleh! 💪");
+                appendChat('bot', "Ops, anak ayam tak suka tu. Cuba semak klu yang saya berikan di kotak soalan. Awak pasti boleh! 💪");
             } catch (error) {
                 console.error("Ralat Hint:", error);
                 document.getElementById('inlineRobotText').innerHTML = "Oops, jawapan itu kurang tepat. Jangan putus asa, mari cuba pilihan lain! 💪";
