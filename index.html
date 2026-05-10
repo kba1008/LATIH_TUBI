@@ -8,183 +8,256 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="manifest" href="manifest.json">
     <style>
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+        .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+
         /* 3D Baby Blue Glassmorphism utilities */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
             box-shadow: 
-                0 12px 32px 0 rgba(31, 38, 135, 0.15),
-                inset 0 2px 0 0 rgba(255, 255, 255, 0.9),
-                inset 0 -2px 0 0 rgba(0, 0, 0, 0.05);
+                0 15px 35px 0 rgba(31, 38, 135, 0.1),
+                inset 0 2px 0 0 rgba(255, 255, 255, 1),
+                inset 0 -2px 0 0 rgba(0, 0, 0, 0.02);
             color: #1e293b;
         }
         .glass-header {
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
             color: #0f172a;
         }
         .glass-button {
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 1);
             box-shadow: 
-                0 4px 15px rgba(0, 0, 0, 0.05), 
-                inset 0 -3px 5px rgba(0, 0, 0, 0.05), 
-                inset 0 3px 5px rgba(255, 255, 255, 0.9);
+                0 4px 15px rgba(0, 0, 0, 0.03), 
+                inset 0 -4px 6px rgba(0, 0, 0, 0.04), 
+                inset 0 4px 6px rgba(255, 255, 255, 1);
             color: #1e293b;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         .glass-button:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.9);
-            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-4px);
             box-shadow: 
-                0 8px 25px rgba(0, 0, 0, 0.1), 
-                inset 0 -3px 5px rgba(0, 0, 0, 0.05), 
-                inset 0 3px 5px rgba(255, 255, 255, 1);
+                0 10px 25px rgba(0, 0, 0, 0.1), 
+                inset 0 -4px 6px rgba(0, 0, 0, 0.03), 
+                inset 0 4px 6px rgba(255, 255, 255, 1);
         }
         .glass-input {
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 1);
             color: #0f172a;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+            box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.04);
         }
         .glass-input::placeholder {
             color: #64748b;
         }
         
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.5); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.4); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.8); }
+        
+        /* Chat Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-200 via-blue-100 to-cyan-200 min-h-screen text-slate-800 font-sans flex flex-col">
+<body class="bg-gradient-to-br from-blue-100 via-blue-50 to-cyan-100 min-h-screen text-slate-800 font-sans flex flex-col">
 
     <!-- Header -->
-    <header class="glass-header p-4 sticky top-0 z-10">
-        <div class="max-w-3xl mx-auto flex justify-between items-center">
+    <header class="glass-header p-4 sticky top-0 z-40">
+        <div class="max-w-[1400px] w-full px-4 mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <i data-lucide="brain-circuit" class="w-7 h-7 text-blue-600"></i>
-                <h1 class="text-xl font-extrabold tracking-wide text-slate-800">Latih<span class="text-blue-600">AI</span></h1>
-            </div>
-            <div class="flex items-center gap-4">
-                <div class="hidden sm:flex flex-col items-end">
-                    <span id="headerPlayerName" class="text-sm font-bold text-slate-700">-</span>
-                    <span class="text-xs text-blue-600 font-black"><span id="headerPoints">0</span> Mata</span>
+                <div class="p-2 bg-blue-100 rounded-xl shadow-inner border border-blue-200 animate-float">
+                    <i data-lucide="bot" class="w-7 h-7 text-blue-600"></i>
                 </div>
-                <button onclick="showLeaderboard()" class="p-2 hover:bg-white/50 rounded-full transition" title="Papan Pendahulu">
+                <h1 class="text-xl md:text-2xl font-extrabold tracking-wide text-slate-800">Latih<span class="text-blue-600">AI</span></h1>
+            </div>
+            <div class="flex items-center gap-2 md:gap-4">
+                <div class="hidden sm:flex flex-col items-end mr-2">
+                    <span id="headerPlayerName" class="text-sm font-bold text-slate-700">-</span>
+                    <span class="text-xs text-blue-600 font-black bg-blue-100 px-2 py-0.5 rounded-full mt-1 shadow-inner"><span id="headerPoints">0</span> Mata</span>
+                </div>
+                <button onclick="showLeaderboard()" class="p-2 md:p-3 bg-white/60 hover:bg-white rounded-full transition shadow-sm border border-white" title="Papan Pendahulu">
                     <i data-lucide="trophy" class="w-5 h-5 text-amber-500"></i>
                 </button>
-                <button onclick="promptPassword()" class="p-2 hover:bg-white/50 rounded-full transition" title="Tetapan & Admin">
+                <button onclick="promptPassword()" class="p-2 md:p-3 bg-white/60 hover:bg-white rounded-full transition shadow-sm border border-white" title="Tetapan & Admin">
                     <i data-lucide="settings" class="w-5 h-5 text-slate-500"></i>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="max-w-3xl mx-auto p-4 mt-6 flex-grow w-full">
+    <!-- Main Content Container (Full Margin Desktop) -->
+    <main class="max-w-[1400px] w-full px-4 md:px-8 mx-auto mt-6 flex-grow grid grid-cols-1 lg:grid-cols-3 gap-6 pb-10">
         
-        <!-- Init / Welcome Screen -->
-        <div id="welcomeScreen" class="glass-panel rounded-3xl p-8 text-center fade-in">
-            <div class="inline-block p-5 rounded-full bg-blue-100/80 shadow-inner mb-6">
-                <i data-lucide="rocket" class="w-12 h-12 text-blue-500"></i>
-            </div>
-            <h2 class="text-3xl font-black mb-3 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600">Bersedia untuk Cabaran?</h2>
-            <p class="text-slate-600 mb-8 font-medium">Uji minda anda, kumpul mata, dan tewaskan rakan-rakan di Papan Pendahulu!</p>
-            
-            <div class="max-w-md mx-auto space-y-4">
-                <div>
-                    <label class="block text-left text-sm font-bold text-slate-700 mb-2 ml-1">Nama Pemain</label>
-                    <input type="text" id="playerNameInput" class="glass-input w-full rounded-2xl p-4 focus:ring-4 focus:ring-blue-300 outline-none transition font-semibold" placeholder="Masukkan nama anda...">
+        <!-- LEFT PANEL: Quiz Area -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Init / Welcome Screen -->
+            <div id="welcomeScreen" class="glass-panel rounded-[2rem] p-8 md:p-12 text-center fade-in">
+                <div class="inline-block p-6 rounded-full bg-blue-100 shadow-inner mb-6 border-4 border-white animate-float">
+                    <i data-lucide="rocket" class="w-16 h-16 text-blue-500"></i>
                 </div>
-                <button onclick="initApp()" class="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-black py-4 px-6 rounded-2xl transition shadow-xl shadow-blue-500/40 flex items-center justify-center gap-2 transform hover:-translate-y-1">
-                    <i data-lucide="play-circle" class="w-6 h-6"></i> Mula Bermain
-                </button>
+                <h2 class="text-3xl md:text-4xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600">Bersedia untuk Belajar?</h2>
+                <p class="text-slate-600 mb-10 font-medium text-lg">Uji minda anda bersama Cikgu AI, kumpul mata, dan jadi yang terbaik di Papan Pendahulu!</p>
+                
+                <div class="max-w-md mx-auto space-y-5">
+                    <div>
+                        <label class="block text-left text-sm font-bold text-slate-700 mb-2 ml-2">Nama Anda</label>
+                        <input type="text" id="playerNameInput" class="glass-input w-full rounded-2xl p-4 focus:ring-4 focus:ring-blue-300 outline-none transition font-semibold text-lg text-center" placeholder="Masukkan nama anda...">
+                    </div>
+                    <button onclick="initApp()" class="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-black py-4 px-6 rounded-2xl transition shadow-xl shadow-blue-500/40 flex items-center justify-center gap-3 transform hover:-translate-y-1 text-lg">
+                        <i data-lucide="play-circle" class="w-7 h-7"></i> Mula Sekarang
+                    </button>
+                </div>
+                <p id="initStatus" class="text-sm text-blue-600 font-bold mt-6 hidden animate-pulse bg-blue-50 py-2 px-4 rounded-full inline-block border border-blue-200">Menyambung ke pelayan AI...</p>
             </div>
-            <p id="initStatus" class="text-sm text-blue-600 font-bold mt-6 hidden animate-pulse">Sedang menyambung ke pelayan...</p>
+
+            <!-- Loading State -->
+            <div id="loadingScreen" class="glass-panel rounded-[2rem] p-12 text-center hidden fade-in">
+                <div class="relative w-24 h-24 mx-auto mb-6">
+                    <div class="absolute inset-0 bg-blue-200 rounded-full animate-ping opacity-50"></div>
+                    <div class="relative flex items-center justify-center w-full h-full bg-white rounded-full shadow-lg border-4 border-blue-100">
+                        <i data-lucide="loader-2" class="w-10 h-10 text-blue-500 animate-spin"></i>
+                    </div>
+                </div>
+                <h2 class="text-2xl font-extrabold text-slate-800 mb-2">Cikgu AI Sedang Berfikir...</h2>
+                <p class="text-slate-500 font-medium">Menyediakan soalan istimewa untuk anda.</p>
+            </div>
+
+            <!-- Quiz Screen -->
+            <div id="quizScreen" class="hidden fade-in space-y-6">
+                
+                <!-- Actions Area -->
+                <div class="flex justify-end">
+                    <button id="btnGenerateNote" onclick="generateNote()" class="flex items-center gap-2 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white text-sm font-extrabold py-2.5 px-6 rounded-full transition shadow-lg shadow-amber-400/30 transform hover:-translate-y-1">
+                        <i data-lucide="book-open" class="w-5 h-5"></i> Jana Nota AI
+                    </button>
+                </div>
+                
+                <!-- Generated Note Card (Redesigned) -->
+                <div id="noteArea" class="hidden relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 rounded-[2rem] p-8 border-2 border-amber-200 shadow-lg fade-in">
+                    <div class="absolute -top-6 -right-6 p-4 opacity-10 transform rotate-12">
+                        <i data-lucide="book-open" class="w-40 h-40 text-amber-900"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-3 mb-4 text-amber-600 font-black text-xl">
+                            <div class="p-2 bg-amber-100 rounded-full animate-pulse">
+                                <i data-lucide="lightbulb" class="w-6 h-6"></i>
+                            </div>
+                            <h3>Nota Pintar AI</h3>
+                        </div>
+                        <div id="noteText" class="text-amber-900 text-[15px] font-semibold leading-relaxed whitespace-pre-wrap bg-white/60 p-6 rounded-2xl border border-amber-100 shadow-sm"></div>
+                    </div>
+                </div>
+
+                <!-- Question Area -->
+                <div class="glass-panel p-8 md:p-10 rounded-[2rem]">
+                    <div class="inline-block bg-blue-100 text-blue-700 font-black text-xs px-3 py-1 rounded-full mb-4 border border-blue-200 uppercase tracking-wider">Soalan Semasa</div>
+                    <h3 id="questionText" class="text-2xl md:text-3xl font-black mb-8 text-slate-800 leading-snug drop-shadow-sm"></h3>
+                    <div id="optionsContainer" class="space-y-4">
+                        <!-- Options will be injected here -->
+                    </div>
+
+                    <!-- Inline Robot Feedback (For Wrong Answers) -->
+                    <div id="inlineRobotHint" class="hidden flex flex-col sm:flex-row gap-4 mt-8 fade-in items-start">
+                        <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center animate-float shadow-lg border-2 border-white z-10 flex-shrink-0">
+                            <i data-lucide="bot" class="w-8 h-8 text-blue-600"></i>
+                        </div>
+                        <div class="bg-white/80 backdrop-blur-md rounded-2xl sm:rounded-tl-none p-5 shadow-xl border border-blue-100 flex-grow relative w-full">
+                            <div class="hidden sm:block absolute -left-3 top-2 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-r-[15px] border-r-white/80"></div>
+                            <h4 class="font-black text-blue-700 text-sm mb-2 flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4"></i> Cikgu AI Menganalisis...</h4>
+                            <p id="inlineRobotText" class="text-slate-700 text-sm md:text-base font-bold leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Final Feedback Area (For Correct Answer) -->
+                <div id="feedbackArea" class="hidden p-8 rounded-[2rem] fade-in glass-panel border-4">
+                    <div id="feedbackHeader" class="flex items-center gap-3 font-black mb-4 text-2xl"></div>
+                    <p id="feedbackText" class="text-slate-700 font-bold text-lg leading-relaxed mb-8"></p>
+                    <button onclick="generateNextQuestion()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-4 px-6 rounded-2xl transition flex items-center justify-center gap-3 shadow-xl shadow-slate-800/30 transform hover:-translate-y-1 text-lg">
+                        Teruskan Perjalanan <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <!-- Loading State -->
-        <div id="loadingScreen" class="glass-panel rounded-3xl p-10 text-center hidden fade-in">
-            <i data-lucide="loader-2" class="w-14 h-14 mx-auto text-blue-500 animate-spin mb-4"></i>
-            <h2 class="text-xl font-extrabold text-slate-800">AI sedang menjana cabaran...</h2>
-            <p class="text-slate-500 mt-2 font-medium">Sila tunggu sebentar. Memproses 1 soalan mengikut tahap anda.</p>
-        </div>
-
-        <!-- Quiz Screen -->
-        <div id="quizScreen" class="hidden fade-in space-y-6">
-            
-            <!-- Actions & Note Area -->
-            <div class="flex justify-end">
-                <button id="btnGenerateNote" onclick="generateNote()" class="flex items-center gap-2 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white text-sm font-extrabold py-2 px-5 rounded-full transition shadow-lg shadow-amber-400/30">
-                    <i data-lucide="book-open" class="w-4 h-4"></i> Jana Nota AI
-                </button>
-            </div>
-            
-            <!-- Generated Note Card -->
-            <div id="noteArea" class="hidden glass-panel rounded-2xl p-6 border-l-8 border-l-amber-400 fade-in">
-                <div class="flex items-center gap-2 mb-3 text-amber-600 font-black">
-                    <i data-lucide="lightbulb" class="w-6 h-6"></i>
-                    <h3>Nota Ringkas</h3>
+        <!-- RIGHT PANEL: Robot Chat & Interaction Area -->
+        <div class="lg:col-span-1">
+            <div class="glass-panel rounded-[2rem] p-6 flex flex-col h-[600px] sticky top-24 shadow-2xl border-2 border-white/80">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/50">
+                    <h3 class="text-xl font-black flex items-center gap-3 text-slate-800">
+                        <div class="p-2 bg-blue-500 rounded-lg shadow-inner">
+                            <i data-lucide="message-circle" class="text-white w-6 h-6"></i>
+                        </div>
+                        Sembang Cikgu AI
+                    </h3>
                 </div>
-                <p id="noteText" class="text-slate-700 text-sm font-medium leading-relaxed whitespace-pre-wrap"></p>
-            </div>
-
-            <!-- Question Area -->
-            <div class="glass-panel p-8 rounded-3xl">
-                <h3 id="questionText" class="text-2xl font-black mb-8 text-slate-800 leading-snug"></h3>
-                <div id="optionsContainer" class="space-y-4">
-                    <!-- Options will be injected here -->
+                
+                <div id="chatBox" class="flex-grow overflow-y-auto space-y-4 mb-4 pr-2 custom-scrollbar">
+                    <!-- Initial Welcome Message -->
+                    <div class="flex gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
+                            <i data-lucide="bot" class="w-6 h-6 text-blue-600"></i>
+                        </div>
+                        <div class="bg-white/80 p-4 rounded-2xl rounded-tl-none text-[14px] font-semibold text-slate-700 border border-blue-50 shadow-sm">
+                            Hai! 👋 Saya Cikgu AI. Boleh tanya saya apa-apa soalan di sini jika awak perlukan bantuan.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2 mt-auto pt-4 border-t border-white/50">
+                    <input type="text" id="chatInput" class="glass-input flex-grow rounded-xl p-3 md:p-4 text-sm md:text-base focus:ring-4 focus:ring-blue-300 outline-none font-medium transition" placeholder="Tanya cikgu di sini..." onkeypress="handleChatKeyPress(event)">
+                    <button onclick="sendChat()" class="bg-blue-600 hover:bg-blue-700 text-white p-3 md:p-4 rounded-xl transition shadow-lg flex items-center justify-center">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                    </button>
                 </div>
             </div>
-
-            <!-- Feedback Area -->
-            <div id="feedbackArea" class="hidden p-6 rounded-3xl fade-in glass-panel border-2">
-                <div id="feedbackHeader" class="flex items-center gap-2 font-black mb-3 text-xl"></div>
-                <p id="feedbackText" class="text-slate-700 font-medium text-sm leading-relaxed mb-6"></p>
-                <button onclick="generateNextQuestion()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 px-4 rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-slate-800/30">
-                    Teruskan ke Soalan Seterusnya <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                </button>
-            </div>
         </div>
+
     </main>
 
     <!-- Leaderboard Modal -->
-    <div id="leaderboardModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
-        <div class="glass-panel rounded-3xl p-8 w-full max-w-md shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center gap-3">
-                    <div class="p-2 bg-amber-100 rounded-full">
-                        <i data-lucide="trophy" class="w-6 h-6 text-amber-500"></i>
+    <div id="leaderboardModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
+        <div class="glass-panel rounded-[2rem] p-8 w-full max-w-lg shadow-2xl transform scale-95 transition-transform duration-300" id="leaderboardBox">
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex items-center gap-4">
+                    <div class="p-3 bg-amber-100 rounded-full shadow-inner border-2 border-white">
+                        <i data-lucide="trophy" class="w-8 h-8 text-amber-500"></i>
                     </div>
-                    <h3 class="text-2xl font-black text-slate-800">Papan Pendahulu</h3>
+                    <h3 class="text-3xl font-black text-slate-800">Juara AI</h3>
                 </div>
-                <button onclick="closeLeaderboard()" class="text-slate-400 hover:text-slate-700 transition">
+                <button onclick="closeLeaderboard()" class="p-2 bg-white/50 hover:bg-white text-slate-500 rounded-full transition shadow-sm">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <div id="leaderboardContent" class="space-y-3 max-h-72 overflow-y-auto pr-2">
-                <div class="text-center text-slate-500 py-4 font-medium">Memuat turun data...</div>
+            <div id="leaderboardContent" class="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                <div class="text-center text-slate-500 py-4 font-bold animate-pulse">Memuat turun data...</div>
             </div>
         </div>
     </div>
 
     <!-- Settings & Admin Modal -->
-    <div id="settingsModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50 overflow-y-auto">
-        <div class="glass-panel rounded-3xl p-8 w-full max-w-md shadow-2xl my-auto">
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 hidden z-50 overflow-y-auto">
+        <div class="glass-panel rounded-[2rem] p-8 w-full max-w-md shadow-2xl my-auto">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-black flex items-center gap-3 text-slate-800">
-                    <div class="p-2 bg-blue-100 rounded-full">
+                    <div class="p-2 bg-blue-100 rounded-full border border-white">
                         <i data-lucide="settings" class="w-6 h-6 text-blue-600"></i>
                     </div>
                     Tetapan & Admin
@@ -206,10 +279,10 @@
             
             <h4 class="text-lg font-bold mb-3 text-slate-800 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5"></i> Pengurusan Pelajar</h4>
             <button onclick="fetchAdminStudents()" class="w-full mb-3 bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl transition shadow-md flex items-center justify-center gap-2">
-                <i data-lucide="download-cloud" class="w-5 h-5"></i> Muat Turun Senarai Pelajar
+                <i data-lucide="download-cloud" class="w-5 h-5"></i> Muat Turun Senarai
             </button>
             
-            <div id="adminStudentList" class="space-y-2 max-h-48 overflow-y-auto mb-4 p-3 bg-slate-50/50 rounded-xl hidden border border-slate-200">
+            <div id="adminStudentList" class="space-y-2 max-h-48 overflow-y-auto mb-4 p-3 bg-white/50 rounded-xl hidden border border-white custom-scrollbar">
                 <!-- Student items will be injected here -->
             </div>
 
@@ -221,47 +294,43 @@
 
     <!-- Custom Alert Modal -->
     <div id="customAlertModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 hidden z-[100]">
-        <div class="glass-panel rounded-3xl p-8 w-full max-w-sm text-center transform scale-95 transition-transform duration-300 shadow-2xl" id="customAlertBox">
-            <div id="customAlertIcon" class="mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-blue-100 text-blue-500 shadow-inner">
-                <i data-lucide="info" class="w-7 h-7"></i>
+        <div class="glass-panel rounded-[2rem] p-8 w-full max-w-sm text-center transform scale-95 transition-transform duration-300 shadow-2xl" id="customAlertBox">
+            <div id="customAlertIcon" class="mx-auto mb-4 w-16 h-16 flex items-center justify-center rounded-full bg-blue-100 text-blue-500 shadow-inner border-4 border-white">
+                <i data-lucide="info" class="w-8 h-8"></i>
             </div>
-            <h3 id="customAlertTitle" class="text-xl font-black mb-2 text-slate-800">Makluman</h3>
-            <p id="customAlertMessage" class="text-slate-600 text-sm font-medium mb-8 leading-relaxed"></p>
-            <button onclick="closeCustomAlert()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition w-full shadow-lg">Tutup</button>
+            <h3 id="customAlertTitle" class="text-2xl font-black mb-2 text-slate-800">Makluman</h3>
+            <p id="customAlertMessage" class="text-slate-600 text-base font-medium mb-8 leading-relaxed"></p>
+            <button onclick="closeCustomAlert()" class="bg-blue-600 hover:bg-blue-700 text-white font-black py-3 px-8 rounded-xl transition w-full shadow-lg">Tutup</button>
         </div>
     </div>
 
-    <!-- Custom Prompt Modal (Input) -->
+    <!-- Custom Prompt Modal -->
     <div id="customPromptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 hidden z-[100]">
-        <div class="glass-panel rounded-3xl p-8 w-full max-w-sm transform scale-95 transition-transform duration-300 shadow-2xl" id="customPromptBox">
+        <div class="glass-panel rounded-[2rem] p-8 w-full max-w-sm transform scale-95 transition-transform duration-300 shadow-2xl" id="customPromptBox">
             <h3 class="text-xl font-black mb-2 text-slate-800">Sila Sahkan</h3>
             <p id="customPromptMessage" class="text-slate-600 text-sm font-medium mb-6"></p>
             <input type="password" id="customPromptInput" class="glass-input w-full rounded-xl p-4 focus:ring-4 focus:ring-blue-300 outline-none transition mb-6 font-bold tracking-widest text-center" placeholder="***">
             <div class="flex gap-3">
-                <button onclick="closeCustomPrompt()" class="flex-1 bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-4 rounded-xl transition">Batal</button>
+                <button onclick="closeCustomPrompt()" class="flex-1 bg-white hover:bg-slate-50 text-slate-700 font-bold py-3 px-4 rounded-xl transition border border-slate-200">Batal</button>
                 <button onclick="submitCustomPrompt()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg">Sahkan</button>
             </div>
         </div>
     </div>
 
-    <!-- Custom Confirm Modal (Yes/No) -->
+    <!-- Custom Confirm Modal -->
     <div id="customConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 hidden z-[100]">
-        <div class="glass-panel rounded-3xl p-8 w-full max-w-sm text-center transform scale-95 transition-transform duration-300 shadow-2xl" id="customConfirmBox">
+        <div class="glass-panel rounded-[2rem] p-8 w-full max-w-sm text-center transform scale-95 transition-transform duration-300 shadow-2xl" id="customConfirmBox">
             <h3 id="customConfirmTitle" class="text-xl font-black mb-2 text-slate-800">Pengesahan</h3>
-            <p id="customConfirmMessage" class="text-slate-600 text-sm font-medium mb-6"></p>
+            <p id="customConfirmMessage" class="text-slate-600 text-sm font-medium mb-6 leading-relaxed"></p>
             <div class="flex gap-3">
-                <button id="btnConfirmCancel" class="flex-1 bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-4 rounded-xl transition shadow-md"></button>
+                <button id="btnConfirmCancel" class="flex-1 bg-white hover:bg-slate-50 text-slate-700 font-bold py-3 px-4 rounded-xl transition border border-slate-200"></button>
                 <button id="btnConfirmOk" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg"></button>
             </div>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // URL GAS LALAI DARI PENGGUNA
-        // ==========================================
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxLOSMrsLJTU7ZeINHYdOsp6hnlQ0XuAJkCm4AReWGtz4n2OgtCFjGIgL5tTc52zwzqPA/exec";
-        // ==========================================
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxkenFUkoDuUBXJoLhmZuUnzzXla4ZmJb9D2AwXCelO8_bYqW38dyK2AuLUN72bRyYJMg/exec";
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -283,7 +352,8 @@
             isProcessing: false,
             playerName: localStorage.getItem('playerName') || '',
             points: parseInt(localStorage.getItem('points')) || 0,
-            noteGenerated: false
+            noteGenerated: false,
+            currentAttempts: 0
         };
 
         if(state.playerName) document.getElementById('playerNameInput').value = state.playerName;
@@ -294,12 +364,12 @@
             document.getElementById('customAlertMessage').textContent = message;
             const iconDiv = document.getElementById('customAlertIcon');
             if (isError) {
-                iconDiv.className = 'mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-red-100 text-red-500 shadow-inner';
-                iconDiv.innerHTML = '<i data-lucide="alert-triangle" class="w-7 h-7"></i>';
+                iconDiv.className = 'mx-auto mb-4 w-16 h-16 flex items-center justify-center rounded-full bg-red-100 text-red-500 shadow-inner border-4 border-white';
+                iconDiv.innerHTML = '<i data-lucide="alert-triangle" class="w-8 h-8"></i>';
                 document.getElementById('customAlertTitle').textContent = 'Ralat';
             } else {
-                iconDiv.className = 'mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-blue-100 text-blue-500 shadow-inner';
-                iconDiv.innerHTML = '<i data-lucide="info" class="w-7 h-7"></i>';
+                iconDiv.className = 'mx-auto mb-4 w-16 h-16 flex items-center justify-center rounded-full bg-blue-100 text-blue-500 shadow-inner border-4 border-white';
+                iconDiv.innerHTML = '<i data-lucide="info" class="w-8 h-8"></i>';
                 document.getElementById('customAlertTitle').textContent = 'Makluman';
             }
             lucide.createIcons();
@@ -410,14 +480,14 @@
                 
                 data.students.forEach(s => {
                     listDiv.innerHTML += `
-                        <div class="flex justify-between items-center p-2 border-b border-slate-200">
+                        <div class="flex justify-between items-center p-3 border-b border-slate-200">
                             <div>
                                 <span class="font-bold text-sm text-slate-800">${s.name}</span>
                                 <span class="text-xs text-blue-600 font-black ml-2">${s.points} pts</span>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="adminResetStudent('${s.name}')" class="p-1.5 bg-amber-100 text-amber-600 rounded hover:bg-amber-200 transition" title="Reset Markah"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
-                                <button onclick="adminDeleteStudent('${s.name}')" class="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition" title="Gugurkan"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                <button onclick="adminResetStudent('${s.name}')" class="p-2 bg-amber-100 text-amber-600 rounded-lg hover:bg-amber-200 transition" title="Reset Markah"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+                                <button onclick="adminDeleteStudent('${s.name}')" class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition" title="Gugurkan"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                             </div>
                         </div>
                     `;
@@ -463,9 +533,12 @@
         }
 
         async function showLeaderboard() {
-            document.getElementById('leaderboardModal').classList.remove('hidden');
+            const modal = document.getElementById('leaderboardModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('leaderboardBox').classList.replace('scale-95', 'scale-100'), 10);
+            
             const lbContent = document.getElementById('leaderboardContent');
-            lbContent.innerHTML = '<div class="text-center text-blue-500 py-4 font-bold animate-pulse">Memuat turun data...</div>';
+            lbContent.innerHTML = '<div class="text-center text-blue-500 py-4 font-bold animate-pulse">Memuat turun data dari pelayan...</div>';
 
             if(!state.gasUrl) {
                 lbContent.innerHTML = '<div class="text-center text-red-500 py-4 font-bold">Sila tetapkan URL Web App dahulu.</div>';
@@ -484,17 +557,19 @@
                 if(data.leaderboard && data.leaderboard.length > 0) {
                     lbContent.innerHTML = '';
                     data.leaderboard.forEach((player, index) => {
-                        let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<span class="w-6 inline-block text-center text-slate-400 font-black">${index+1}</span>`;
-                        let isMe = player.name === state.playerName ? 'bg-blue-100 border-blue-300 shadow-md' : 'bg-white/50 border-transparent';
+                        let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<span class="w-8 inline-block text-center text-slate-400 font-black">${index+1}</span>`;
+                        let isMe = player.name === state.playerName ? 'bg-blue-50 border-blue-300 shadow-md transform scale-[1.02]' : 'bg-white/50 border-white';
                         let textMe = player.name === state.playerName ? 'text-blue-700' : 'text-slate-700';
                         
                         lbContent.innerHTML += `
-                            <div class="flex justify-between items-center p-4 rounded-2xl border ${isMe} transition">
+                            <div class="flex justify-between items-center p-4 rounded-2xl border ${isMe} transition duration-300">
                                 <div class="flex items-center gap-4">
-                                    <span class="text-2xl drop-shadow-sm">${medal}</span>
-                                    <span class="font-extrabold ${textMe}">${player.name}</span>
+                                    <span class="text-3xl drop-shadow-sm">${medal}</span>
+                                    <span class="font-extrabold text-lg ${textMe}">${player.name}</span>
                                 </div>
-                                <span class="font-black text-blue-600 text-lg">${player.points} <span class="text-xs font-semibold text-slate-500">pts</span></span>
+                                <div class="bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100">
+                                    <span class="font-black text-blue-600 text-lg">${player.points} <span class="text-xs font-semibold text-slate-500">pts</span></span>
+                                </div>
                             </div>
                         `;
                     });
@@ -508,13 +583,14 @@
         }
 
         function closeLeaderboard() {
-            document.getElementById('leaderboardModal').classList.add('hidden');
+            document.getElementById('leaderboardBox').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => document.getElementById('leaderboardModal').classList.add('hidden'), 300);
         }
 
         async function initApp() {
             const nameInput = document.getElementById('playerNameInput').value.trim();
             if (!nameInput) {
-                showCustomAlert("Sila masukkan nama anda untuk mula mengumpul markah.", true);
+                showCustomAlert("Sila masukkan nama anda untuk mula.", true);
                 return;
             }
             
@@ -529,7 +605,7 @@
             
             const statusEl = document.getElementById('initStatus');
             statusEl.classList.remove('hidden');
-            statusEl.textContent = "Menyambung pangkalan data...";
+            statusEl.textContent = "Menyambung pangkalan data AI...";
 
             try {
                 const response = await fetch(state.gasUrl, {
@@ -554,10 +630,11 @@
                     updateHeaderUI();
                 }
 
-                // Semak sejarah sesi pelajar
+                appendChat('bot', `Selamat kembali, ${state.playerName}! Bersedia untuk cabaran hari ini? 🚀`);
+
                 if (state.answeredTopics.length > 0 && state.answeredTopics.length < state.questions.length) {
                     showCustomConfirm("Sambung Sesi?", 
-                        `Sistem merekodkan anda telah menjawab ${state.answeredTopics.length} soalan sebelum ini. Mahu sambung sesi lepas atau mulakan sesi pusingan baru? (Pilihan ini tidak akan menjejaskan markah terkumpul anda).`,
+                        `Sistem merekodkan anda telah menjawab ${state.answeredTopics.length} soalan sebelum ini. Mahu sambung sesi lepas atau mulakan sesi pusingan baru? (Markah kekal).`,
                         "Mula Baru", "Sambung Sesi", 
                         () => {
                             state.answeredTopics = [];
@@ -569,7 +646,7 @@
                         }
                     );
                 } else if (state.answeredTopics.length >= state.questions.length && state.questions.length > 0) {
-                    showCustomAlert("Anda telah berjaya menamatkan semua pusingan topik sedia ada. Sesi pusingan soalan baru akan dimulakan!");
+                    showCustomAlert("Anda hebat! Semua soalan telah dicuba. Sesi kitaran baru akan dimulakan.");
                     state.answeredTopics = [];
                     saveScoreToGAS();
                     generateNextQuestion();
@@ -587,22 +664,23 @@
         async function generateNextQuestion() {
             showScreen('loadingScreen');
             document.getElementById('feedbackArea').classList.add('hidden');
+            document.getElementById('inlineRobotHint').classList.add('hidden');
+            state.currentAttempts = 0;
             
             state.noteGenerated = false;
             document.getElementById('noteArea').classList.add('hidden');
             const btnNote = document.getElementById('btnGenerateNote');
             btnNote.disabled = false;
-            btnNote.innerHTML = `<i data-lucide="book-open" class="w-4 h-4"></i> Jana Nota AI`;
+            btnNote.innerHTML = `<i data-lucide="book-open" class="w-5 h-5"></i> Jana Nota AI`;
             
             let availableTopics = state.questions.filter(q => !state.answeredTopics.includes(q));
             if(availableTopics.length === 0) {
-                showCustomAlert("Tahniah! Anda telah menjawab kesemua soalan untuk semua topik. Kitaran akan di-reset semula.");
+                appendChat('bot', 'Wah, anda telah selesaikan semua topik! Mari kita mula kitaran ulang kaji semula. 🌟');
                 state.answeredTopics = [];
                 availableTopics = state.questions;
                 saveScoreToGAS();
             }
 
-            // Jana maksima 1 soalan mengikut prosedur NEXT butang
             state.currentTopic = availableTopics[Math.floor(Math.random() * availableTopics.length)];
             
             const prompt = `Berdasarkan topik berikut: "${state.currentTopic}", hasilkan:
@@ -627,7 +705,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                     body: JSON.stringify({
                         model: "llama-3.3-70b-versatile",
                         messages: [
-                            { role: "system", content: "Anda ialah sistem guru pakar di Malaysia yang HANYA membalas dalam format JSON yang sah dan patuh arahan format." },
+                            { role: "system", content: "Anda ialah sistem guru pakar di Malaysia yang HANYA membalas dalam format JSON yang sah." },
                             { role: "user", content: prompt }
                         ],
                         response_format: { type: "json_object" },
@@ -638,16 +716,13 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
 
                 if (!groqResponse.ok) {
                     const errorData = await groqResponse.json();
-                    console.error("Ralat Pelayan Groq API:", errorData);
-                    throw new Error(`Sistem AI lambat bertindak balas atau format tidak sah (Kod: ${groqResponse.status}) - ${errorData.error?.message || ''}`);
+                    throw new Error(`(Kod: ${groqResponse.status}) - ${errorData.error?.message || ''}`);
                 }
 
                 const groqData = await groqResponse.json();
                 let content = groqData.choices[0].message.content;
                 
-                // Bersihkan kod markdown dari Llama (sebagai langkah berjaga-jaga)
                 content = content.replace(/```json/gi, '').replace(/```/g, '').trim();
-                
                 const jsonMatch = content.match(/\{[\s\S]*\}/);
                 if (!jsonMatch) throw new Error("Format JSON dari AI tidak tepat.");
                 
@@ -670,8 +745,8 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             
             state.currentQuiz.pilihan.forEach((opt, index) => {
                 const btn = document.createElement('button');
-                btn.className = 'w-full text-left p-5 rounded-2xl glass-button font-bold text-lg option-btn flex items-center gap-4';
-                btn.innerHTML = `<span class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 font-black shadow-inner border border-blue-200">${['A','B','C','D'][index]}</span> <span>${opt}</span>`;
+                btn.className = 'w-full text-left p-6 rounded-2xl glass-button font-bold text-lg option-btn flex items-center gap-5 transition-all duration-300';
+                btn.innerHTML = `<span class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-full bg-white text-blue-600 font-black shadow-sm border-2 border-blue-100 text-xl">${['A','B','C','D'][index]}</span> <span class="leading-relaxed">${opt}</span>`;
                 btn.onclick = () => handleAnswer(index, btn);
                 container.appendChild(btn);
             });
@@ -686,13 +761,12 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             const noteText = document.getElementById('noteText');
             
             btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menjana...`;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Menjana...`;
             lucide.createIcons();
             
             noteArea.classList.remove('hidden');
-            noteText.innerHTML = '<span class="animate-pulse text-amber-500 font-bold">AI sedang menyusun nota ringkas untuk anda...</span>';
+            noteText.innerHTML = '<span class="animate-pulse text-amber-500 font-bold">Cikgu AI sedang menyusun nota cantik untuk awak... ✨</span>';
 
-            // Modified AI Prompt: Casual, bullet points, 5-year-old level
             const prompt = `Soalan: ${state.currentQuiz.soalan}\nPilihan Jawapan: ${state.currentQuiz.pilihan.join(", ")}\n\nTolong buatkan nota ringkas dalam bentuk point (senarai pendek). Terangkan macam bercakap dengan budak umur 5 tahun. Guna gaya bahasa yang sangat santai, manja dan senang faham. Kaitkan sikit dengan pilihan jawapan supaya mereka faham konsep, tapi elakkan dari bagi jawapan bocor terus ya!`;
 
             try {
@@ -713,89 +787,93 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 if (!response.ok) throw new Error("Ralat sistem AI nota");
 
                 const data = await response.json();
-                noteText.textContent = data.choices[0].message.content;
+                noteText.innerHTML = data.choices[0].message.content.replace(/\n/g, '<br>');
                 state.noteGenerated = true;
-                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Nota Dijana`;
+                btn.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i> Nota Berjaya Dijana`;
+                appendChat('bot', 'Saya dah sediakan Nota Pintar di ruangan sebelah kiri. Jemput baca! 📖');
             } catch (error) {
                 console.error("Ralat Penjanaan Nota:", error);
                 noteText.textContent = "Gagal menjana nota. Sila cuba sebentar lagi.";
                 btn.disabled = false;
-                btn.innerHTML = `<i data-lucide="book-open" class="w-4 h-4"></i> Cuba Semula`;
+                btn.innerHTML = `<i data-lucide="book-open" class="w-5 h-5"></i> Cuba Semula`;
             }
             lucide.createIcons();
         }
 
         async function handleAnswer(selectedIndex, btnElement) {
-            if (state.isProcessing) return;
-            state.isProcessing = true;
+            if (state.isProcessing || btnElement.disabled) return;
             
-            // Simpan sejarah topik supaya soalan yang sama tidak berulang
-            if(!state.answeredTopics.includes(state.currentTopic)) {
-                state.answeredTopics.push(state.currentTopic);
-            }
-            
-            document.querySelectorAll('.option-btn').forEach(b => {
-                b.disabled = true;
-                b.classList.remove('hover:bg-white/90');
-                b.classList.add('opacity-60', 'cursor-not-allowed');
-            });
-
             const isCorrect = selectedIndex === state.currentQuiz.jawapan_betul;
-            const feedbackArea = document.getElementById('feedbackArea');
-            const feedbackHeader = document.getElementById('feedbackHeader');
-            const feedbackText = document.getElementById('feedbackText');
-            
-            feedbackArea.classList.remove('hidden', 'border-green-400', 'border-red-400', 'bg-green-50', 'bg-red-50');
-            feedbackHeader.innerHTML = '';
+            const inlineRobotHint = document.getElementById('inlineRobotHint');
+            const inlineRobotText = document.getElementById('inlineRobotText');
             
             if (isCorrect) {
-                btnElement.style.background = 'rgba(187, 247, 208, 0.8)'; // Green tint
+                state.isProcessing = true;
+                
+                if(!state.answeredTopics.includes(state.currentTopic)) {
+                    state.answeredTopics.push(state.currentTopic);
+                }
+                
+                document.querySelectorAll('.option-btn').forEach(b => {
+                    b.disabled = true;
+                    b.classList.remove('hover:bg-white');
+                    if(b !== btnElement) b.classList.add('opacity-40');
+                });
+
+                btnElement.style.background = 'rgba(187, 247, 208, 0.9)';
                 btnElement.style.borderColor = '#4ade80';
-                btnElement.classList.remove('opacity-60');
+                btnElement.classList.add('shadow-lg', 'transform', 'scale-[1.02]');
                 
-                feedbackArea.classList.add('border-green-400', 'bg-green-50/90');
-                feedbackHeader.innerHTML = `<i data-lucide="check-circle-2" class="w-7 h-7 text-green-600"></i> <span class="text-green-700">Tepat Sekali! +10 Mata</span>`;
-                feedbackText.className = "text-green-800 font-bold text-sm leading-relaxed mb-6";
-                feedbackText.textContent = "Tahniah! Jawapan anda adalah betul. Teruskan usaha cemerlang ini.";
-                
-                state.points += 10;
+                let earnedPoints = 0;
+                if (state.currentAttempts === 0) earnedPoints = 10;
+                else if (state.currentAttempts === 1) earnedPoints = 5;
+                else if (state.currentAttempts === 2) earnedPoints = 2;
+                else earnedPoints = 1;
+
+                state.points += earnedPoints;
                 localStorage.setItem('points', state.points);
                 updateHeaderUI();
-                
-                // Sentiasa simpan markah dan rekod soalan ke sheet
                 saveScoreToGAS();
+
+                inlineRobotHint.classList.add('hidden');
+                
+                const feedbackArea = document.getElementById('feedbackArea');
+                const feedbackHeader = document.getElementById('feedbackHeader');
+                const feedbackText = document.getElementById('feedbackText');
+                
+                feedbackArea.classList.remove('hidden', 'border-red-400', 'bg-red-50/90');
+                feedbackArea.classList.add('border-green-400', 'bg-green-50/95');
+                feedbackHeader.innerHTML = `<div class="p-2 bg-green-200 rounded-full"><i data-lucide="check-circle-2" class="w-8 h-8 text-green-700"></i></div> <span class="text-green-800">Tepat Sekali!</span>`;
+                feedbackText.className = "text-green-800 font-bold text-lg leading-relaxed mb-6";
+                feedbackText.textContent = `Tahniah! Jawapan anda adalah betul. Anda berjaya mengumpul +${earnedPoints} mata.`;
+                
+                appendChat('bot', `Tahniah ${state.playerName}! Jawapan betul. Anda dapat +${earnedPoints} mata. 🎉 Teruskan usaha!`);
 
                 lucide.createIcons();
                 state.isProcessing = false;
             } else {
-                btnElement.style.background = 'rgba(254, 202, 202, 0.8)'; // Red tint
+                // Wrong answer flow - Give chance to try again
+                state.currentAttempts++;
+                
+                btnElement.style.background = 'rgba(254, 202, 202, 0.7)';
                 btnElement.style.borderColor = '#f87171';
-                btnElement.classList.remove('opacity-60');
+                btnElement.disabled = true;
+                btnElement.classList.add('opacity-60', 'cursor-not-allowed', 'animate-shake');
+                setTimeout(() => btnElement.classList.remove('animate-shake'), 400);
                 
-                const correctBtn = document.querySelectorAll('.option-btn')[state.currentQuiz.jawapan_betul];
-                correctBtn.style.background = 'rgba(187, 247, 208, 0.8)';
-                correctBtn.style.borderColor = '#4ade80';
-                correctBtn.classList.remove('opacity-60');
-
-                feedbackArea.classList.add('border-red-400', 'bg-red-50/90');
-                feedbackHeader.innerHTML = `<i data-lucide="x-circle" class="w-7 h-7 text-red-600"></i> <span class="text-red-700">Kurang Tepat</span>`;
-                feedbackText.className = "text-red-800 font-bold text-sm leading-relaxed mb-6";
-                feedbackText.innerHTML = "<span class='animate-pulse text-red-600'>AI sedang merangka penerangan...</span>";
-                lucide.createIcons();
+                inlineRobotHint.classList.remove('hidden');
+                inlineRobotText.innerHTML = '<span class="animate-pulse text-blue-600">Sedang memikirkan klu terbaik untuk awak... 🧐</span>';
                 
-                // Simpan rekod soalan walaupun salah (supaya tidak ulang)
-                saveScoreToGAS();
-                
-                await generateExplanation(wrongIndex = selectedIndex);
+                await generateHint(selectedIndex);
             }
         }
 
-        async function generateExplanation(wrongIndex) {
+        async function generateHint(wrongIndex) {
             const question = state.currentQuiz.soalan;
             const correctAnswer = state.currentQuiz.pilihan[state.currentQuiz.jawapan_betul];
             const wrongAnswer = state.currentQuiz.pilihan[wrongIndex];
 
-            const prompt = `Soalan: ${question}\nJawapan Sebenar: ${correctAnswer}\nJawapan Murid (Salah): ${wrongAnswer}\n\nSebagai seorang guru yang prihatin, terangkan secara ringkas (1-2 ayat sahaja) dalam Bahasa Melayu mengapa jawapan murid itu salah dan berikan galakan.`;
+            const prompt = `Soalan: ${question}\nJawapan Sebenar (JANGAN DEDAHKAN): ${correctAnswer}\nJawapan Murid (Salah): ${wrongAnswer}\n\nSebagai seorang guru pakar AI yang prihatin, berikan respons ringkas (1-2 ayat sahaja) memberitahu bahawa pilihan murid itu kurang tepat, dan berikan SATU KLU/HINT menarik mengapa ia salah. PASTIKAN TIDAK MENDEDAHKAN JAWAPAN SEBENAR supaya murid boleh cuba fikir lagi. Beri galakan mesra dan gunakan emoji.`;
 
             try {
                 const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -812,15 +890,107 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                     })
                 });
                 
-                if (!response.ok) throw new Error("Ralat sistem AI penerangan");
+                if (!response.ok) throw new Error("Ralat hint");
 
                 const data = await response.json();
-                document.getElementById('feedbackText').textContent = data.choices[0].message.content;
+                const hint = data.choices[0].message.content;
+                document.getElementById('inlineRobotText').innerHTML = hint + " <br><span class='text-blue-500 font-extrabold text-sm mt-2 inline-block'>Sila cuba pilihan yang lain! 👇</span>";
+                appendChat('bot', "Kurang tepat tu. Cuba semak klu yang saya berikan di kotak soalan. Awak pasti boleh! 💪");
             } catch (error) {
-                console.error("Ralat Penerangan:", error);
-                document.getElementById('feedbackText').textContent = "Maaf, sistem AI gagal menjana penerangan buat masa ini.";
-            } finally {
-                state.isProcessing = false;
+                console.error("Ralat Hint:", error);
+                document.getElementById('inlineRobotText').innerHTML = "Oops, jawapan itu kurang tepat. Jangan putus asa, mari cuba pilihan lain! 💪";
+            }
+        }
+
+        // --- Fungsi Chat Robot ---
+        function appendChat(sender, message) {
+            const chatBox = document.getElementById('chatBox');
+            const isBot = sender === 'bot';
+            
+            const div = document.createElement('div');
+            div.className = `flex gap-3 ${isBot ? '' : 'flex-row-reverse fade-in'}`;
+            
+            let avatar = '';
+            let msgClass = '';
+            
+            if (isBot) {
+                avatar = `<div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm"><i data-lucide="bot" class="w-6 h-6 text-blue-600"></i></div>`;
+                msgClass = `bg-white/80 border border-blue-50 text-slate-700 rounded-tl-none`;
+            } else {
+                avatar = `<div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm"><i data-lucide="user" class="w-6 h-6 text-slate-600"></i></div>`;
+                msgClass = `bg-blue-600 text-white shadow-md rounded-tr-none`;
+            }
+            
+            div.innerHTML = `
+                ${avatar}
+                <div class="p-4 rounded-2xl ${msgClass} text-[14px] font-semibold max-w-[80%] leading-relaxed">
+                    ${message}
+                </div>
+            `;
+            
+            chatBox.appendChild(div);
+            lucide.createIcons();
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendChat();
+            }
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg || !state.apiKey) return;
+            
+            appendChat('user', msg);
+            input.value = '';
+            
+            const chatBox = document.getElementById('chatBox');
+            const typingId = 'typing-' + Date.now();
+            const typingIndicator = document.createElement('div');
+            typingIndicator.id = typingId;
+            typingIndicator.className = 'flex gap-3';
+            typingIndicator.innerHTML = `
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm"><i data-lucide="bot" class="w-6 h-6 text-blue-600"></i></div>
+                <div class="bg-white/80 p-4 rounded-2xl rounded-tl-none border border-blue-50 flex items-center gap-2">
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                </div>
+            `;
+            chatBox.appendChild(typingIndicator);
+            lucide.createIcons();
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const context = state.currentQuiz ? `Topik/Soalan semasa yang murid sedang buat: "${state.currentQuiz.soalan}".` : 'Murid berada di laman utama.';
+            const prompt = `Anda ialah Cikgu AI, guru pakar yang comel, mesra dan ceria. ${context} Murid bertanya: "${msg}". Jawab dengan mesra, ringkas (maksimum 3 ayat), gaya bahasa seperti bercakap dengan pelajar sekolah, dan pastikan guna emoji yang sesuai.`;
+
+            try {
+                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${state.apiKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: "llama-3.3-70b-versatile",
+                        messages: [{ role: "user", content: prompt }],
+                        temperature: 0.7,
+                        max_tokens: 256
+                    })
+                });
+                
+                document.getElementById(typingId).remove();
+
+                if (!response.ok) throw new Error("Ralat sembang");
+                const data = await response.json();
+                appendChat('bot', data.choices[0].message.content);
+            } catch (error) {
+                console.error("Ralat Chat:", error);
+                if(document.getElementById(typingId)) document.getElementById(typingId).remove();
+                appendChat('bot', "Maaf, line internet Cikgu AI kurang stabil sekarang. Boleh ulang tanya? 🥺");
             }
         }
 
