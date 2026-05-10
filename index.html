@@ -114,7 +114,7 @@
                 </button>
             </div>
             
-            <!-- Generated Note Card (Hidden by default) -->
+            <!-- Generated Note Card -->
             <div id="noteArea" class="hidden glass-panel rounded-xl p-5 border-l-4 border-l-yellow-400 fade-in">
                 <div class="flex items-center gap-2 mb-3 text-yellow-300 font-bold">
                     <i data-lucide="lightbulb" class="w-5 h-5"></i>
@@ -181,11 +181,36 @@
         </div>
     </div>
 
+    <!-- Custom Alert Modal (Gantikan alert asal untuk sorok URL) -->
+    <div id="customAlertModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[100]">
+        <div class="glass-panel rounded-2xl p-6 w-full max-w-sm text-center transform scale-95 transition-transform duration-300" id="customAlertBox">
+            <div id="customAlertIcon" class="mx-auto mb-4 w-12 h-12 flex items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400">
+                <i data-lucide="info" class="w-6 h-6"></i>
+            </div>
+            <h3 id="customAlertTitle" class="text-lg font-bold mb-2">Makluman</h3>
+            <p id="customAlertMessage" class="text-gray-300 text-sm mb-6"></p>
+            <button onclick="closeCustomAlert()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-6 rounded-xl transition w-full">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Custom Prompt Modal (Gantikan prompt asal untuk sorok URL) -->
+    <div id="customPromptModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[100]">
+        <div class="glass-panel rounded-2xl p-6 w-full max-w-sm transform scale-95 transition-transform duration-300" id="customPromptBox">
+            <h3 class="text-lg font-bold mb-2">Pengesahan</h3>
+            <p id="customPromptMessage" class="text-gray-300 text-sm mb-4"></p>
+            <input type="password" id="customPromptInput" class="glass-input w-full rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 outline-none transition mb-4" placeholder="...">
+            <div class="flex gap-3">
+                <button onclick="closeCustomPrompt()" class="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-xl transition">Batal</button>
+                <button onclick="submitCustomPrompt()" class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-xl transition">Sahkan</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==========================================
         // URL GAS LALAI DARI PENGGUNA
         // ==========================================
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxOIYatU9NMCJwvoeMyyKuK4Gg6ta35S6kHOzdomKDQjT2DDAyYWUIptFQ7B2QT9l_qAQ/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxkenFUkoDuUBXJoLhmZuUnzzXla4ZmJb9D2AwXCelO8_bYqW38dyK2AuLUN72bRyYJMg/exec";
         // ==========================================
 
         // Register Service Worker for PWA
@@ -193,7 +218,7 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
                     .then(reg => console.log('Service Worker terdaftar', reg))
-                    .catch(err => console.log('Ralat Service Worker', err));
+                    .catch(err => console.error('Ralat Service Worker', err));
             });
         }
 
@@ -216,6 +241,53 @@
         if(state.playerName) document.getElementById('playerNameInput').value = state.playerName;
         updateHeaderUI();
 
+        // Custom Alert Logic
+        function showCustomAlert(message, isError = false) {
+            document.getElementById('customAlertMessage').textContent = message;
+            const iconDiv = document.getElementById('customAlertIcon');
+            if (isError) {
+                iconDiv.className = 'mx-auto mb-4 w-12 h-12 flex items-center justify-center rounded-full bg-red-500/20 text-red-400';
+                iconDiv.innerHTML = '<i data-lucide="alert-triangle" class="w-6 h-6"></i>';
+                document.getElementById('customAlertTitle').textContent = 'Ralat';
+            } else {
+                iconDiv.className = 'mx-auto mb-4 w-12 h-12 flex items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400';
+                iconDiv.innerHTML = '<i data-lucide="info" class="w-6 h-6"></i>';
+                document.getElementById('customAlertTitle').textContent = 'Makluman';
+            }
+            lucide.createIcons();
+            const modal = document.getElementById('customAlertModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('customAlertBox').classList.replace('scale-95', 'scale-100'), 10);
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('customAlertBox').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => document.getElementById('customAlertModal').classList.add('hidden'), 300);
+        }
+
+        // Custom Prompt Logic
+        let promptCallback = null;
+        function showCustomPrompt(message, callback) {
+            document.getElementById('customPromptMessage').textContent = message;
+            document.getElementById('customPromptInput').value = '';
+            promptCallback = callback;
+            const modal = document.getElementById('customPromptModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('customPromptBox').classList.replace('scale-95', 'scale-100'), 10);
+        }
+
+        function closeCustomPrompt() {
+            document.getElementById('customPromptBox').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => document.getElementById('customPromptModal').classList.add('hidden'), 300);
+            promptCallback = null;
+        }
+
+        function submitCustomPrompt() {
+            const val = document.getElementById('customPromptInput').value;
+            if (promptCallback) promptCallback(val);
+            closeCustomPrompt();
+        }
+
         // UI Functions
         function updateHeaderUI() {
             document.getElementById('headerPlayerName').textContent = state.playerName || '-';
@@ -223,13 +295,14 @@
         }
 
         function promptPassword() {
-            const pwd = prompt("Sila masukkan kata laluan untuk mengakses tetapan:");
-            if (pwd === "101010") {
-                document.getElementById('gasUrlInput').value = state.gasUrl;
-                document.getElementById('settingsModal').classList.remove('hidden');
-            } else if (pwd !== null) {
-                alert("Kata laluan salah!");
-            }
+            showCustomPrompt("Sila masukkan kata laluan untuk mengakses tetapan:", (pwd) => {
+                if (pwd === "101010") {
+                    document.getElementById('gasUrlInput').value = state.gasUrl;
+                    document.getElementById('settingsModal').classList.remove('hidden');
+                } else if (pwd !== "") {
+                    showCustomAlert("Kata laluan salah!", true);
+                }
+            });
         }
 
         function closeSettings() {
@@ -239,7 +312,7 @@
         function saveSettings() {
             state.gasUrl = document.getElementById('gasUrlInput').value.trim();
             localStorage.setItem('gasUrl', state.gasUrl);
-            alert("Tetapan berjaya disimpan!");
+            showCustomAlert("Tetapan berjaya disimpan!");
             closeSettings();
         }
 
@@ -265,6 +338,8 @@
                     method: 'POST',
                     body: JSON.stringify({ action: 'get_leaderboard' })
                 });
+                
+                if (!response.ok) throw new Error("Rangkaian pelayan bermasalah");
                 const data = await response.json();
                 
                 if(data.leaderboard && data.leaderboard.length > 0) {
@@ -287,7 +362,8 @@
                     lbContent.innerHTML = '<div class="text-center text-gray-400 py-4">Belum ada rekod pendahulu.</div>';
                 }
             } catch(e) {
-                lbContent.innerHTML = '<div class="text-center text-red-400 py-4">Gagal memuat turun papan pendahulu.</div>';
+                console.error("Ralat memuat turun Papan Pendahulu:", e);
+                lbContent.innerHTML = '<div class="text-center text-red-400 py-4">Gagal memuat turun papan pendahulu. Sila cuba lagi.</div>';
             }
         }
 
@@ -299,7 +375,7 @@
         async function initApp() {
             const nameInput = document.getElementById('playerNameInput').value.trim();
             if (!nameInput) {
-                alert("Sila masukkan nama anda untuk mula mengumpul markah.");
+                showCustomAlert("Sila masukkan nama anda untuk mula mengumpul markah.", true);
                 return;
             }
             
@@ -308,7 +384,7 @@
             updateHeaderUI();
 
             if (!state.gasUrl) {
-                alert("Sila masukkan URL Google Web App melalui butang tetapan terlebih dahulu.");
+                showCustomAlert("Sila masukkan URL Google Web App melalui butang tetapan terlebih dahulu.", true);
                 return;
             }
             
@@ -320,13 +396,14 @@
                 const response = await fetch(state.gasUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'init' })
+                    body: JSON.stringify({ action: 'init', name: state.playerName })
                 });
                 
+                if (!response.ok) throw new Error("Gagal menyambung ke pangkalan data Google Sheet.");
                 const data = await response.json();
                 
                 if (data.error) throw new Error(data.error);
-                if (data.questions.length === 0) throw new Error("Tiada soalan dijumpai.");
+                if (!data.questions || data.questions.length === 0) throw new Error("Tiada rekod soalan ditemui dalam tab 'SOALAN'.");
 
                 state.apiKey = data.apiKey;
                 state.questions = data.questions;
@@ -341,7 +418,8 @@
                 await generateNextQuestion();
 
             } catch (error) {
-                alert("Ralat Sistem: " + error.message);
+                console.error("Ralat Init App:", error);
+                showCustomAlert("Ralat Sistem: " + error.message, true);
                 statusEl.classList.add('hidden');
             }
         }
@@ -385,18 +463,25 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                     })
                 });
 
+                if (!groqResponse.ok) {
+                    const errorData = await groqResponse.json();
+                    console.error("Ralat Pelayan Groq API:", errorData);
+                    throw new Error("Sistem AI lambat bertindak balas atau kuota tamat. (Kod: " + groqResponse.status + ")");
+                }
+
                 const groqData = await groqResponse.json();
                 const content = groqData.choices[0].message.content;
                 
                 const jsonMatch = content.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) throw new Error("Gagal membaca format JSON dari AI.");
+                if (!jsonMatch) throw new Error("Format JSON dari AI tidak tepat.");
                 
                 state.currentQuiz = JSON.parse(jsonMatch[0]);
                 renderQuiz();
                 showScreen('quizScreen');
 
             } catch (error) {
-                alert("Ralat semasa menjana soalan AI. Sila cuba lagi.");
+                console.error("Ralat Penjanaan Soalan:", error);
+                showCustomAlert("Ada ralat semasa menjana soalan AI: " + error.message + ". Sila cuba lagi.", true);
                 showScreen('welcomeScreen');
             }
         }
@@ -447,12 +532,15 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                         max_tokens: 300
                     })
                 });
+                
+                if (!response.ok) throw new Error("Ralat sistem AI nota");
 
                 const data = await response.json();
                 noteText.textContent = data.choices[0].message.content;
                 state.noteGenerated = true;
                 btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Nota Dijana`;
             } catch (error) {
+                console.error("Ralat Penjanaan Nota:", error);
                 noteText.textContent = "Gagal menjana nota. Sila cuba sebentar lagi.";
                 btn.disabled = false;
                 btn.innerHTML = `<i data-lucide="book-open" class="w-4 h-4"></i> Cuba Semula`;
@@ -534,10 +622,13 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                         max_tokens: 150
                     })
                 });
+                
+                if (!response.ok) throw new Error("Ralat sistem AI penerangan");
 
                 const data = await response.json();
                 document.getElementById('feedbackText').textContent = data.choices[0].message.content;
             } catch (error) {
+                console.error("Ralat Penerangan:", error);
                 document.getElementById('feedbackText').textContent = "Maaf, sistem AI gagal menjana penerangan buat masa ini.";
             } finally {
                 state.isProcessing = false;
@@ -556,7 +647,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                     })
                 });
             } catch(e) {
-                console.error("Gagal menyimpan markah:", e);
+                console.error("Gagal menyimpan markah ke pelayan:", e);
             }
         }
     </script>
