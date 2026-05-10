@@ -17,7 +17,7 @@
         .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
 
-        /* Animasi Anak Ayam Baru */
+        /* Animasi Itik Baru */
         .animate-dance { animation: dance 2s infinite ease-in-out; display: inline-block; }
         @keyframes dance { 
             0%, 100% { transform: rotate(-5deg) translateY(0); } 
@@ -99,8 +99,8 @@
 </head>
 <body class="bg-gradient-to-br from-indigo-100 via-fuchsia-50 to-cyan-100 min-h-screen text-slate-800 font-sans flex flex-col">
 
-    <!-- Pet Container (Draggable Chick) -->
-    <div id="petContainer" class="fixed bottom-4 left-2 md:left-8 z-50 flex flex-col items-center justify-end h-56 w-40 cursor-grab touch-none pointer-events-auto">
+    <!-- Pet Container (Draggable Duck) -->
+    <div id="petContainer" class="fixed bottom-4 left-2 md:left-8 z-40 flex flex-col items-center justify-end h-56 w-40 cursor-grab touch-none pointer-events-auto">
         <div id="petSpeech" class="absolute top-2 opacity-0 bg-white/95 backdrop-blur px-4 py-2 rounded-2xl rounded-bl-none text-lg font-black text-slate-700 shadow-xl border-2 border-indigo-100 transition-all duration-500 transform translate-y-4 z-20 whitespace-nowrap">
             Nyam! +1 
         </div>
@@ -113,9 +113,14 @@
         </div>
     </div>
 
+    <!-- Mobile Chat FAB -->
+    <button onclick="toggleMobileChat()" class="fixed bottom-8 right-4 z-40 p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-2xl lg:hidden hover:from-purple-600 hover:to-pink-600 transition-transform transform hover:scale-110 border-4 border-white animate-bounce pointer-events-auto flex items-center justify-center" title="Buka Sembang AI">
+        <i data-lucide="message-circle" class="w-8 h-8"></i>
+    </button>
+
     <!-- Header -->
-    <header class="glass-header p-4 sticky top-0 z-40">
-        <div class="w-full max-w-[1400px] px-4 md:px-6 mx-auto flex justify-between items-center">
+    <header class="glass-header p-4 sticky top-0 z-30">
+        <div class="w-full max-w-[1100px] px-4 md:px-6 mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <div class="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl shadow-inner border border-indigo-300 animate-float">
                     <i data-lucide="bot" class="w-6 h-6 text-white"></i>
@@ -138,7 +143,7 @@
     </header>
 
     <!-- Main Content Container -->
-    <main class="w-full max-w-[1400px] px-4 md:px-6 mx-auto mt-6 flex-grow grid grid-cols-1 lg:grid-cols-4 gap-6 pb-24">
+    <main class="w-full max-w-[1100px] px-4 md:px-6 mx-auto mt-6 flex-grow grid grid-cols-1 lg:grid-cols-4 gap-6 pb-24">
         
         <!-- LEFT PANEL: Quiz Area -->
         <div class="lg:col-span-3 space-y-6">
@@ -148,7 +153,7 @@
                     <i data-lucide="rocket" class="w-16 h-16 text-indigo-500"></i>
                 </div>
                 <h2 class="text-3xl md:text-5xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Bersedia untuk Belajar?</h2>
-                <p class="text-slate-600 mb-10 font-medium text-lg md:text-xl">Uji minda anda bersama Cikgu AI, kumpul mata, bela anak ayam comel, dan jadi juara!</p>
+                <p class="text-slate-600 mb-10 font-medium text-lg md:text-xl">Uji minda anda bersama Cikgu AI, kumpul mata, bela anak itik comel, dan jadi juara!</p>
                 
                 <div class="max-w-xl mx-auto space-y-6">
                     <div>
@@ -232,9 +237,14 @@
             </div>
         </div>
 
-        <!-- RIGHT PANEL: Robot Chat -->
-        <div class="lg:col-span-1">
-            <div class="glass-panel rounded-[2.5rem] p-5 md:p-6 flex flex-col h-[calc(100vh-140px)] min-h-[600px] sticky top-28 shadow-2xl">
+        <!-- RIGHT PANEL: Robot Chat (Desktop Grid Column / Mobile Modal) -->
+        <div id="chatWrapper" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md items-center justify-center p-4 z-50 lg:block lg:static lg:bg-transparent lg:backdrop-blur-none lg:p-0 lg:z-auto lg:col-span-1 pointer-events-auto">
+            <div class="glass-panel rounded-[2.5rem] p-5 md:p-6 flex flex-col h-[85vh] w-full max-w-md mx-auto lg:max-w-none lg:h-[calc(100vh-140px)] min-h-[500px] lg:min-h-[600px] lg:sticky lg:top-28 shadow-3xl lg:shadow-2xl relative">
+                <!-- Close button for mobile -->
+                <button onclick="toggleMobileChat()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-white/80 p-2 rounded-full transition lg:hidden z-10 border-2 border-white shadow-sm">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+
                 <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-white/60">
                     <h3 class="text-xl md:text-2xl font-black flex items-center gap-3 text-slate-800">
                         <div class="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl shadow-inner border border-purple-200">
@@ -268,7 +278,7 @@
     </main>
 
     <!-- Leaderboard Modal -->
-    <div id="leaderboardModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 hidden z-50 pointer-events-auto">
+    <div id="leaderboardModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 hidden z-[60] pointer-events-auto">
         <div class="glass-panel rounded-[2.5rem] p-8 md:p-10 w-full max-w-xl shadow-3xl transform scale-95 transition-transform duration-300" id="leaderboardBox">
             <div class="flex justify-between items-center mb-8">
                 <div class="flex items-center gap-4">
@@ -288,7 +298,7 @@
     </div>
 
     <!-- Settings & Admin Modal -->
-    <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 hidden z-50 pointer-events-auto overflow-y-auto">
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 hidden z-[60] pointer-events-auto overflow-y-auto">
         <div class="glass-panel rounded-[2.5rem] p-8 md:p-10 w-full max-w-lg shadow-3xl my-auto">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-2xl font-black flex items-center gap-3 text-slate-800">
@@ -390,17 +400,20 @@
             currentAttempts: 0
         };
 
-        // Menjana Peringkat Anak Ayam 0-32
+        // Menjana Peringkat Itik 0-32 (Telur -> Menetas -> Anak Itik -> Itik)
         const PET_STAGES = [
-            { level: 0, emoji: '', scale: 1.0 },
-            { level: 1, emoji: '', scale: 1.05 },
-            { level: 2, emoji: '', scale: 1.1 }
+            { level: 0, emoji: '🥚', scale: 1.0 },
+            { level: 1, emoji: '🥚', scale: 1.05 },
+            { level: 2, emoji: '🥚', scale: 1.1 }
         ];
         for (let i = 3; i <= 32; i++) {
-            PET_STAGES.push({ level: i, emoji: '', scale: 1.0 + ((i - 3) * 0.05) });
+            let emj = '🦆';
+            if (i === 3) emj = '🐣';
+            else if (i > 3 && i < 16) emj = '🐤';
+            PET_STAGES.push({ level: i, emoji: emj, scale: 1.0 + ((i - 3) * 0.05) });
         }
 
-        const FOOD_TYPES = ['', '', '', '', '', '', '', '', '', ''];
+        const FOOD_TYPES = ['🍞', '🌽', '🥬', '🐛', '🌱', '🌾', '🐟', '🦐', '🥖', '🌿'];
 
         // Dragging Logic for Pet
         const petContainer = document.getElementById('petContainer');
@@ -465,6 +478,23 @@
         if(state.playerName) document.getElementById('playerNameInput').value = state.playerName;
         updateHeaderUI();
         updatePetUI();
+
+        // Mobile Chat Toggle Logic
+        function toggleMobileChat() {
+            const chatWrapper = document.getElementById('chatWrapper');
+            if (chatWrapper.classList.contains('hidden')) {
+                chatWrapper.classList.remove('hidden');
+                chatWrapper.classList.add('flex');
+                // Auto scroll ke bawah apabila chat dibuka di paparan mudah alih
+                setTimeout(() => {
+                    const chatBox = document.getElementById('chatBox');
+                    if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+                }, 50);
+            } else {
+                chatWrapper.classList.add('hidden');
+                chatWrapper.classList.remove('flex');
+            }
+        }
 
         function updateHeaderUI() {
             document.getElementById('headerPlayerName').textContent = state.playerName || '-';
@@ -734,7 +764,7 @@
                 if(data.leaderboard && data.leaderboard.length > 0) {
                     lbContent.innerHTML = '';
                     data.leaderboard.forEach((player, index) => {
-                        let medal = index === 0 ? '' : index === 1 ? '' : index === 2 ? '' : `<span class="w-8 inline-block text-center text-slate-400 font-black">${index+1}</span>`;
+                        let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<span class="w-8 inline-block text-center text-slate-400 font-black">${index+1}</span>`;
                         let isMe = player.name === state.playerName ? 'bg-indigo-50 border-indigo-300 shadow-xl transform scale-[1.02]' : 'bg-white/70 border-white';
                         let textMe = player.name === state.playerName ? 'text-indigo-700' : 'text-slate-700';
                         
@@ -816,7 +846,7 @@
 
                 if (state.answeredTopics.length > 0 && state.answeredTopics.length < state.questions.length) {
                     showCustomConfirm("Sambung Sesi?", 
-                        `Sistem merekodkan anda telah menjawab ${state.answeredTopics.length} soalan sebelum ini. Mahu sambung sesi lepas atau mulakan sesi pusingan baru? (Markah dan Anak Ayam kekal).`,
+                        `Sistem merekodkan anda telah menjawab ${state.answeredTopics.length} soalan sebelum ini. Mahu sambung sesi lepas atau mulakan sesi pusingan baru? (Markah dan Itik kekal).`,
                         "Mula Baru", "Sambung Sesi", 
                         () => {
                             state.answeredTopics = [];
@@ -1033,9 +1063,9 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 feedbackArea.classList.add('border-emerald-400', 'bg-emerald-50/95');
                 feedbackHeader.innerHTML = `<div class="p-2 bg-emerald-200 rounded-full"><i data-lucide="check-circle-2" class="w-8 h-8 text-emerald-700"></i></div> <span class="text-emerald-800">Hebat Sekali!</span>`;
                 feedbackText.className = "text-emerald-800 font-bold text-xl md:text-2xl leading-relaxed mb-8";
-                feedbackText.textContent = `Tahniah! Jawapan anda adalah betul. Anda berjaya mengumpul +${earnedPoints} mata. Anak ayam anda semakin membesar!`;
+                feedbackText.textContent = `Tahniah! Jawapan anda adalah betul. Anda berjaya mengumpul +${earnedPoints} mata. Itik anda semakin membesar!`;
                 
-                appendChat('bot', `Tahniah ${state.playerName}! Jawapan betul. Anda dapat +${earnedPoints} mata dan anak ayam anda sangat gembira!  Teruskan usaha!`);
+                appendChat('bot', `Tahniah ${state.playerName}! Jawapan betul. Anda dapat +${earnedPoints} mata dan itik anda sangat gembira!  Teruskan usaha!`);
 
                 lucide.createIcons();
                 state.isProcessing = false;
@@ -1085,7 +1115,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 const data = await response.json();
                 const hint = data.choices[0].message.content;
                 document.getElementById('inlineRobotText').innerHTML = hint + " <br><span class='text-indigo-500 font-extrabold text-lg mt-3 inline-block'>Sila cuba pilihan yang lain! </span>";
-                appendChat('bot', "Ops, anak ayam tak suka tu. Cuba semak klu yang saya berikan di kotak soalan. Awak pasti boleh! ");
+                appendChat('bot', "Ops, itik tak suka tu. Cuba semak klu yang saya berikan di kotak soalan. Awak pasti boleh! ");
             } catch (error) {
                 console.error("Ralat Hint:", error);
                 document.getElementById('inlineRobotText').innerHTML = "Oops, jawapan itu kurang tepat. Jangan putus asa, mari cuba pilihan lain! ";
