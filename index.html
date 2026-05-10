@@ -260,7 +260,7 @@
         // ==========================================
         // URL GAS LALAI DARI PENGGUNA
         // ==========================================
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbx1HpZA705Do2y3CtHBb-Rx-rjpYjSRrIpXlONHygPBu5gq5s22Nhceqj4_QJMaGPyqlg/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxkenFUkoDuUBXJoLhmZuUnzzXla4ZmJb9D2AwXCelO8_bYqW38dyK2AuLUN72bRyYJMg/exec";
         // ==========================================
 
         if ('serviceWorker' in navigator) {
@@ -605,7 +605,7 @@
             // Jana maksima 1 soalan mengikut prosedur NEXT butang
             state.currentTopic = availableTopics[Math.floor(Math.random() * availableTopics.length)];
             
-            const prompt = `Anda ialah guru pakar di Malaysia. Berdasarkan topik berikut: "${state.currentTopic}", hasilkan:
+            const prompt = `Berdasarkan topik berikut: "${state.currentTopic}", hasilkan:
 1. 1 Soalan objektif berkaitan topik tersebut.
 2. 4 pilihan jawapan (A, B, C, D).
 3. Indeks jawapan yang betul (0 untuk A, 1 untuk B, 2 untuk C, 3 untuk D).
@@ -625,22 +625,27 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "llama-3.1-70b-versatile",
-                        messages: [{ role: "user", content: prompt }],
-                        temperature: 0.7
+                        model: "llama-3.3-70b-versatile",
+                        messages: [
+                            { role: "system", content: "Anda ialah sistem guru pakar di Malaysia yang HANYA membalas dalam format JSON yang sah dan patuh arahan format." },
+                            { role: "user", content: prompt }
+                        ],
+                        response_format: { type: "json_object" },
+                        temperature: 0.7,
+                        max_tokens: 1024
                     })
                 });
 
                 if (!groqResponse.ok) {
                     const errorData = await groqResponse.json();
                     console.error("Ralat Pelayan Groq API:", errorData);
-                    throw new Error(`Sistem AI lambat bertindak balas atau kuota tamat. (Kod: ${groqResponse.status})`);
+                    throw new Error(`Sistem AI lambat bertindak balas atau format tidak sah (Kod: ${groqResponse.status}) - ${errorData.error?.message || ''}`);
                 }
 
                 const groqData = await groqResponse.json();
                 let content = groqData.choices[0].message.content;
                 
-                // Bersihkan kod markdown dari Llama
+                // Bersihkan kod markdown dari Llama (sebagai langkah berjaga-jaga)
                 content = content.replace(/```json/gi, '').replace(/```/g, '').trim();
                 
                 const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -697,10 +702,10 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "llama-3.1-70b-versatile",
+                        model: "llama-3.3-70b-versatile",
                         messages: [{ role: "user", content: prompt }],
                         temperature: 0.5,
-                        max_tokens: 350
+                        max_tokens: 512
                     })
                 });
                 
@@ -799,10 +804,10 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "llama-3.1-70b-versatile",
+                        model: "llama-3.3-70b-versatile",
                         messages: [{ role: "user", content: prompt }],
                         temperature: 0.5,
-                        max_tokens: 150
+                        max_tokens: 256
                     })
                 });
                 
