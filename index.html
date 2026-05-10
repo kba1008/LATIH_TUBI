@@ -260,7 +260,7 @@
         // ==========================================
         // URL GAS LALAI DARI PENGGUNA
         // ==========================================
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycby2gg0Ew1CQyOvIRDWIP6MDnbikBXqC4NaEQMKNtP-YQPE_FOpeIqa0vUZ-3YCfqLCp/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxkenFUkoDuUBXJoLhmZuUnzzXla4ZmJb9D2AwXCelO8_bYqW38dyK2AuLUN72bRyYJMg/exec";
         // ==========================================
 
         if ('serviceWorker' in navigator) {
@@ -692,7 +692,8 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             noteArea.classList.remove('hidden');
             noteText.innerHTML = '<span class="animate-pulse text-amber-500 font-bold">AI sedang menyusun nota ringkas untuk anda...</span>';
 
-            const prompt = `Soalan: ${state.currentQuiz.soalan}\nPilihan Jawapan: ${state.currentQuiz.pilihan.join(", ")}\n\nSebagai guru pakar, berikan satu nota ringkas dan sangat mudah difahami berkaitan topik ini. Kaitkan nota tersebut dengan pilihan jawapan yang diberikan supaya murid faham mengapa pilihan tersebut wujud tanpa memberikan secara terang jawapan bocor. Tulis dalam perenggan yang kemas dan Bahasa Melayu yang santai.`;
+            // Modified AI Prompt: Casual, bullet points, 5-year-old level
+            const prompt = `Soalan: ${state.currentQuiz.soalan}\nPilihan Jawapan: ${state.currentQuiz.pilihan.join(", ")}\n\nTolong buatkan nota ringkas dalam bentuk point (senarai pendek). Terangkan macam bercakap dengan budak umur 5 tahun. Guna gaya bahasa yang sangat santai, manja dan senang faham. Kaitkan sikit dengan pilihan jawapan supaya mereka faham konsep, tapi elakkan dari bagi jawapan bocor terus ya!`;
 
             try {
                 const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
