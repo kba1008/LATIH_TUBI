@@ -182,6 +182,12 @@
     </div>
 
     <script>
+        // ==========================================
+        // URL GAS LALAI DARI PENGGUNA
+        // ==========================================
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxOIYatU9NMCJwvoeMyyKuK4Gg6ta35S6kHOzdomKDQjT2DDAyYWUIptFQ7B2QT9l_qAQ/exec";
+        // ==========================================
+
         // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -196,7 +202,7 @@
 
         // App State
         let state = {
-            gasUrl: localStorage.getItem('gasUrl') || '',
+            gasUrl: localStorage.getItem('gasUrl') || DEFAULT_GAS_URL,
             apiKey: '',
             questions: [],
             currentQuiz: null,
