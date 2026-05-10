@@ -1,0 +1,21 @@
+{
+  "name": "Latih Tubi Pintar AI",
+  "short_name": "Latih AI",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#BFDBFE",
+  "theme_color": "#3B82F6",
+  "description": "Aplikasi PWA kompetitif berkonsepkan 3D kaca (Glassmorphism) berwarna Baby Blue berpandukan AI Llama 3.",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3515/3515456.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3515/3515456.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
