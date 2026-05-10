@@ -84,7 +84,7 @@
                 <button onclick="showLeaderboard()" class="p-2 hover:bg-white/50 rounded-full transition" title="Papan Pendahulu">
                     <i data-lucide="trophy" class="w-5 h-5 text-amber-500"></i>
                 </button>
-                <button onclick="promptPassword()" class="p-2 hover:bg-white/50 rounded-full transition" title="Tetapan">
+                <button onclick="promptPassword()" class="p-2 hover:bg-white/50 rounded-full transition" title="Tetapan & Admin">
                     <i data-lucide="settings" class="w-5 h-5 text-slate-500"></i>
                 </button>
             </div>
@@ -118,7 +118,7 @@
         <div id="loadingScreen" class="glass-panel rounded-3xl p-10 text-center hidden fade-in">
             <i data-lucide="loader-2" class="w-14 h-14 mx-auto text-blue-500 animate-spin mb-4"></i>
             <h2 class="text-xl font-extrabold text-slate-800">AI sedang menjana cabaran...</h2>
-            <p class="text-slate-500 mt-2 font-medium">Sila tunggu sebentar.</p>
+            <p class="text-slate-500 mt-2 font-medium">Sila tunggu sebentar. Memproses 1 soalan mengikut tahap anda.</p>
         </div>
 
         <!-- Quiz Screen -->
@@ -153,7 +153,7 @@
                 <div id="feedbackHeader" class="flex items-center gap-2 font-black mb-3 text-xl"></div>
                 <p id="feedbackText" class="text-slate-700 font-medium text-sm leading-relaxed mb-6"></p>
                 <button onclick="generateNextQuestion()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 px-4 rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-slate-800/30">
-                    Teruskan <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    Teruskan ke Soalan Seterusnya <i data-lucide="arrow-right" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
@@ -179,26 +179,42 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
-        <div class="glass-panel rounded-3xl p-8 w-full max-w-md shadow-2xl">
+    <!-- Settings & Admin Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50 overflow-y-auto">
+        <div class="glass-panel rounded-3xl p-8 w-full max-w-md shadow-2xl my-auto">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-black flex items-center gap-3 text-slate-800">
+                <h3 class="text-xl font-black flex items-center gap-3 text-slate-800">
                     <div class="p-2 bg-blue-100 rounded-full">
                         <i data-lucide="settings" class="w-6 h-6 text-blue-600"></i>
                     </div>
-                    Tetapan
+                    Tetapan & Admin
                 </h3>
                 <button onclick="closeSettings()" class="text-slate-400 hover:text-slate-700">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
+            
             <div class="mb-6">
                 <label class="block text-sm font-bold mb-2 text-slate-700">URL Google Web App</label>
                 <input type="text" id="gasUrlInput" class="glass-input w-full rounded-2xl p-4 focus:ring-4 focus:ring-blue-300 outline-none font-medium text-sm" placeholder="Masukkan link Google Apps Script...">
+                <button onclick="saveSettings()" class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-2xl transition shadow-lg shadow-blue-600/30">
+                    Simpan Tetapan
+                </button>
             </div>
-            <button onclick="saveSettings()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition shadow-lg shadow-blue-600/30">
-                Simpan Tetapan
+            
+            <hr class="border-slate-300/50 my-6">
+            
+            <h4 class="text-lg font-bold mb-3 text-slate-800 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5"></i> Pengurusan Pelajar</h4>
+            <button onclick="fetchAdminStudents()" class="w-full mb-3 bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl transition shadow-md flex items-center justify-center gap-2">
+                <i data-lucide="download-cloud" class="w-5 h-5"></i> Muat Turun Senarai Pelajar
+            </button>
+            
+            <div id="adminStudentList" class="space-y-2 max-h-48 overflow-y-auto mb-4 p-3 bg-slate-50/50 rounded-xl hidden border border-slate-200">
+                <!-- Student items will be injected here -->
+            </div>
+
+            <button onclick="adminResetAll()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-2xl transition shadow-lg shadow-red-500/30 flex justify-center items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i> Reset Semua Markah
             </button>
         </div>
     </div>
@@ -215,10 +231,10 @@
         </div>
     </div>
 
-    <!-- Custom Prompt Modal -->
+    <!-- Custom Prompt Modal (Input) -->
     <div id="customPromptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 hidden z-[100]">
         <div class="glass-panel rounded-3xl p-8 w-full max-w-sm transform scale-95 transition-transform duration-300 shadow-2xl" id="customPromptBox">
-            <h3 class="text-xl font-black mb-2 text-slate-800">Pengesahan</h3>
+            <h3 class="text-xl font-black mb-2 text-slate-800">Sila Sahkan</h3>
             <p id="customPromptMessage" class="text-slate-600 text-sm font-medium mb-6"></p>
             <input type="password" id="customPromptInput" class="glass-input w-full rounded-xl p-4 focus:ring-4 focus:ring-blue-300 outline-none transition mb-6 font-bold tracking-widest text-center" placeholder="***">
             <div class="flex gap-3">
@@ -228,11 +244,23 @@
         </div>
     </div>
 
+    <!-- Custom Confirm Modal (Yes/No) -->
+    <div id="customConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 hidden z-[100]">
+        <div class="glass-panel rounded-3xl p-8 w-full max-w-sm text-center transform scale-95 transition-transform duration-300 shadow-2xl" id="customConfirmBox">
+            <h3 id="customConfirmTitle" class="text-xl font-black mb-2 text-slate-800">Pengesahan</h3>
+            <p id="customConfirmMessage" class="text-slate-600 text-sm font-medium mb-6"></p>
+            <div class="flex gap-3">
+                <button id="btnConfirmCancel" class="flex-1 bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-4 rounded-xl transition shadow-md"></button>
+                <button id="btnConfirmOk" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg"></button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==========================================
         // URL GAS LALAI DARI PENGGUNA
         // ==========================================
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbx6y-lN8OjqaDOciMTJv21BwuVGcWbuq-YbWqSGW4nF7hqrWn_HbqFJzz19Z7__S7XPNw/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxkenFUkoDuUBXJoLhmZuUnzzXla4ZmJb9D2AwXCelO8_bYqW38dyK2AuLUN72bRyYJMg/exec";
         // ==========================================
 
         if ('serviceWorker' in navigator) {
@@ -249,6 +277,8 @@
             gasUrl: localStorage.getItem('gasUrl') || DEFAULT_GAS_URL,
             apiKey: '',
             questions: [],
+            answeredTopics: [],
+            currentTopic: '',
             currentQuiz: null,
             isProcessing: false,
             playerName: localStorage.getItem('playerName') || '',
@@ -259,6 +289,7 @@
         if(state.playerName) document.getElementById('playerNameInput').value = state.playerName;
         updateHeaderUI();
 
+        // --- Modal Makluman Biasa ---
         function showCustomAlert(message, isError = false) {
             document.getElementById('customAlertMessage').textContent = message;
             const iconDiv = document.getElementById('customAlertIcon');
@@ -282,6 +313,7 @@
             setTimeout(() => document.getElementById('customAlertModal').classList.add('hidden'), 300);
         }
 
+        // --- Modal Pengesahan dengan Input (Password) ---
         let promptCallback = null;
         function showCustomPrompt(message, callback) {
             document.getElementById('customPromptMessage').textContent = message;
@@ -304,15 +336,41 @@
             closeCustomPrompt();
         }
 
+        // --- Modal Pengesahan Tindakan (Ya/Tidak) ---
+        function showCustomConfirm(title, message, btnCancelText, btnOkText, onCancel, onOk) {
+            document.getElementById('customConfirmTitle').textContent = title;
+            document.getElementById('customConfirmMessage').textContent = message;
+            
+            const btnCancel = document.getElementById('btnConfirmCancel');
+            const btnOk = document.getElementById('btnConfirmOk');
+            
+            btnCancel.textContent = btnCancelText;
+            btnOk.textContent = btnOkText;
+            
+            btnCancel.onclick = () => { closeCustomConfirm(); if(onCancel) onCancel(); };
+            btnOk.onclick = () => { closeCustomConfirm(); if(onOk) onOk(); };
+            
+            const modal = document.getElementById('customConfirmModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('customConfirmBox').classList.replace('scale-95', 'scale-100'), 10);
+        }
+
+        function closeCustomConfirm() {
+            document.getElementById('customConfirmBox').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => document.getElementById('customConfirmModal').classList.add('hidden'), 300);
+        }
+
         function updateHeaderUI() {
             document.getElementById('headerPlayerName').textContent = state.playerName || '-';
             document.getElementById('headerPoints').textContent = state.points;
         }
 
+        // --- Fungsi Tetapan & Admin ---
         function promptPassword() {
-            showCustomPrompt("Sila masukkan kata laluan untuk mengakses tetapan:", (pwd) => {
+            showCustomPrompt("Sila masukkan kata laluan untuk mengakses Tetapan/Admin:", (pwd) => {
                 if (pwd === "101010") {
                     document.getElementById('gasUrlInput').value = state.gasUrl;
+                    document.getElementById('adminStudentList').classList.add('hidden');
                     document.getElementById('settingsModal').classList.remove('hidden');
                 } else if (pwd !== "") {
                     showCustomAlert("Kata laluan salah!", true);
@@ -329,6 +387,72 @@
             localStorage.setItem('gasUrl', state.gasUrl);
             showCustomAlert("Tetapan berjaya disimpan!");
             closeSettings();
+        }
+
+        async function fetchAdminStudents() {
+            const listDiv = document.getElementById('adminStudentList');
+            listDiv.classList.remove('hidden');
+            listDiv.innerHTML = '<div class="text-center text-sm font-bold text-slate-500 animate-pulse">Memuat turun...</div>';
+            
+            try {
+                const response = await fetch(state.gasUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'get_all_students', adminPwd: '101010' })
+                });
+                const data = await response.json();
+                if(!data.success) throw new Error(data.error);
+                
+                listDiv.innerHTML = '';
+                if(data.students.length === 0) {
+                    listDiv.innerHTML = '<div class="text-center text-sm font-bold text-slate-500">Tiada pelajar berdaftar.</div>';
+                    return;
+                }
+                
+                data.students.forEach(s => {
+                    listDiv.innerHTML += `
+                        <div class="flex justify-between items-center p-2 border-b border-slate-200">
+                            <div>
+                                <span class="font-bold text-sm text-slate-800">${s.name}</span>
+                                <span class="text-xs text-blue-600 font-black ml-2">${s.points} pts</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="adminResetStudent('${s.name}')" class="p-1.5 bg-amber-100 text-amber-600 rounded hover:bg-amber-200 transition" title="Reset Markah"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+                                <button onclick="adminDeleteStudent('${s.name}')" class="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition" title="Gugurkan"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+                lucide.createIcons();
+            } catch(e) {
+                listDiv.innerHTML = `<div class="text-center text-sm font-bold text-red-500">${e.message}</div>`;
+            }
+        }
+
+        async function adminAction(task, targetName = null) {
+            try {
+                const response = await fetch(state.gasUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'admin_action', adminPwd: '101010', task, targetName })
+                });
+                const data = await response.json();
+                if(!data.success) throw new Error(data.error);
+                showCustomAlert("Tindakan berjaya dilaksanakan!");
+                fetchAdminStudents();
+            } catch(e) {
+                showCustomAlert("Ralat Admin: " + e.message, true);
+            }
+        }
+
+        function adminResetAll() {
+            showCustomConfirm("Reset Semua Markah?", "Adakah anda pasti mahu mereset SEMUA markah pelajar ke 0? Tindakan ini tidak boleh diundur.", "Batal", "Pasti & Reset", null, () => adminAction('reset_all'));
+        }
+
+        function adminResetStudent(name) {
+            showCustomConfirm("Reset Markah Pelajar?", `Reset markah untuk pelajar bernama ${name}?`, "Batal", "Pasti", null, () => adminAction('reset_student', name));
+        }
+
+        function adminDeleteStudent(name) {
+            showCustomConfirm("Gugurkan Pelajar?", `Padam dan gugurkan rekod ${name} dari sistem sepenuhnya?`, "Batal", "Pasti Gugurkan", null, () => adminAction('delete_student', name));
         }
 
         function showScreen(screenId) {
@@ -422,6 +546,7 @@
 
                 state.apiKey = data.apiKey;
                 state.questions = data.questions;
+                state.answeredTopics = data.answeredTopics || [];
                 
                 if(data.userPoints !== undefined) {
                     state.points = data.userPoints;
@@ -429,7 +554,28 @@
                     updateHeaderUI();
                 }
 
-                await generateNextQuestion();
+                // Semak sejarah sesi pelajar
+                if (state.answeredTopics.length > 0 && state.answeredTopics.length < state.questions.length) {
+                    showCustomConfirm("Sambung Sesi?", 
+                        `Sistem merekodkan anda telah menjawab ${state.answeredTopics.length} soalan sebelum ini. Mahu sambung sesi lepas atau mulakan sesi pusingan baru? (Pilihan ini tidak akan menjejaskan markah terkumpul anda).`,
+                        "Mula Baru", "Sambung Sesi", 
+                        () => {
+                            state.answeredTopics = [];
+                            saveScoreToGAS();
+                            generateNextQuestion();
+                        }, 
+                        () => {
+                            generateNextQuestion();
+                        }
+                    );
+                } else if (state.answeredTopics.length >= state.questions.length && state.questions.length > 0) {
+                    showCustomAlert("Anda telah berjaya menamatkan semua pusingan topik sedia ada. Sesi pusingan soalan baru akan dimulakan!");
+                    state.answeredTopics = [];
+                    saveScoreToGAS();
+                    generateNextQuestion();
+                } else {
+                    await generateNextQuestion();
+                }
 
             } catch (error) {
                 console.error("Ralat Init App:", error);
@@ -448,9 +594,18 @@
             btnNote.disabled = false;
             btnNote.innerHTML = `<i data-lucide="book-open" class="w-4 h-4"></i> Jana Nota AI`;
             
-            const randomTopic = state.questions[Math.floor(Math.random() * state.questions.length)];
+            let availableTopics = state.questions.filter(q => !state.answeredTopics.includes(q));
+            if(availableTopics.length === 0) {
+                showCustomAlert("Tahniah! Anda telah menjawab kesemua soalan untuk semua topik. Kitaran akan di-reset semula.");
+                state.answeredTopics = [];
+                availableTopics = state.questions;
+                saveScoreToGAS();
+            }
+
+            // Jana maksima 1 soalan mengikut prosedur NEXT butang
+            state.currentTopic = availableTopics[Math.floor(Math.random() * availableTopics.length)];
             
-            const prompt = `Anda ialah guru pakar di Malaysia. Berdasarkan topik berikut: "${randomTopic}", hasilkan:
+            const prompt = `Anda ialah guru pakar di Malaysia. Berdasarkan topik berikut: "${state.currentTopic}", hasilkan:
 1. 1 Soalan objektif berkaitan topik tersebut.
 2. 4 pilihan jawapan (A, B, C, D).
 3. Indeks jawapan yang betul (0 untuk A, 1 untuk B, 2 untuk C, 3 untuk D).
@@ -568,6 +723,11 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             if (state.isProcessing) return;
             state.isProcessing = true;
             
+            // Simpan sejarah topik supaya soalan yang sama tidak berulang
+            if(!state.answeredTopics.includes(state.currentTopic)) {
+                state.answeredTopics.push(state.currentTopic);
+            }
+            
             document.querySelectorAll('.option-btn').forEach(b => {
                 b.disabled = true;
                 b.classList.remove('hover:bg-white/90');
@@ -595,6 +755,8 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 state.points += 10;
                 localStorage.setItem('points', state.points);
                 updateHeaderUI();
+                
+                // Sentiasa simpan markah dan rekod soalan ke sheet
                 saveScoreToGAS();
 
                 lucide.createIcons();
@@ -614,6 +776,9 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 feedbackText.className = "text-red-800 font-bold text-sm leading-relaxed mb-6";
                 feedbackText.innerHTML = "<span class='animate-pulse text-red-600'>AI sedang merangka penerangan...</span>";
                 lucide.createIcons();
+                
+                // Simpan rekod soalan walaupun salah (supaya tidak ulang)
+                saveScoreToGAS();
                 
                 await generateExplanation(wrongIndex = selectedIndex);
             }
@@ -661,11 +826,12 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                     body: JSON.stringify({
                         action: 'save_score',
                         name: state.playerName,
-                        points: state.points
+                        points: state.points,
+                        answeredTopics: state.answeredTopics
                     })
                 });
             } catch(e) {
-                console.error("Gagal menyimpan markah ke pelayan:", e);
+                console.error("Gagal menyimpan data ke pelayan:", e);
             }
         }
     </script>
