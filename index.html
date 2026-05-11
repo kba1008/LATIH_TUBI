@@ -378,7 +378,7 @@
     <script>
         // 1. CONSTANT: MODEL AI DITETAPKAN SEKALI SAHAJA DI SINI
         const AI_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzvZqimDbJj_OTPokiX_jJKvzQLMRc_T7jTlQrIqIJt6BYQUY2LEJHgwLTL-MOuZJKMLA/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxCUM_3bxlA_Ufn-Ee8ygzju1eXC-HaVNu-o9AnkVqsFSTFY1qvsE364gQDXhcigI4t/exec";
 
         // Web Audio API for Sound Effects
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -995,14 +995,14 @@
             sessionStorage.setItem('currentTopic', state.currentTopic);
             
             const prompt = `Berdasarkan topik berikut: "${state.currentTopic}", hasilkan:
-1. 1 Nota ulangkaji ringkas dan padat menjurus kepada topik tersebut. Gunakan gaya bahasa yang menyeronokkan, santai, sempoi tetapi menyusuk masuk ke minda dan jiwa murid (kanak-kanak/remaja). Fakta mesti tepat dalam Bahasa Melayu standard.
+1. 1 Nota ulangkaji yang padat, komprehensif, dan dikembangkan isinya (tidak terlalu ringkas). Susun nota ini supaya ia memukau dan terus masuk ke jiwa serta otak murid! Gunakan gaya bahasa seorang guru pakar subjek yang hebat, sangat menarik, bersemangat, penyayang, santai dan sempoi (mesra kanak-kanak/remaja). Fakta wajib tepat dalam Bahasa Melayu standard. Gunakan poin penting (bullet points), analogi mudah difahami, dan emoji yang bersesuaian untuk hasilkan nota yang memukau.
 2. 1 Soalan objektif berdasarkan nota tersebut yang logik dan tidak mengelirukan.
 3. 4 pilihan jawapan (A, B, C, D). Pastikan pilihan jawapan yang betul adalah tepat.
 4. Indeks jawapan yang betul (0 untuk A, 1 untuk B, 2 untuk C, 3 untuk D).
 
 Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah, tanpa sebarang teks tambahan:
 {
-  "nota": "Teks nota santai di sini...",
+  "nota": "Teks nota pakar yang hebat, berpoin & ber-emoji di sini...",
   "soalan": "Teks soalan di sini...",
   "pilihan": ["Pilihan 1", "Pilihan 2", "Pilihan 3", "Pilihan 4"],
   "jawapan_betul": 0
@@ -1023,7 +1023,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                         ],
                         response_format: { type: "json_object" },
                         temperature: 0.7,
-                        max_tokens: 1024
+                        max_tokens: 1500
                     })
                 });
 
