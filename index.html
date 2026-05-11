@@ -376,9 +376,17 @@
     </div>
 
     <script>
+        // Helper untuk Parse Markdown Text (Bold)
+        function parseMarkdown(text) {
+            if (!text) return "";
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-black text-indigo-900">$1</strong>')
+                .replace(/__(.*?)__/g, '<strong class="font-black text-indigo-900">$1</strong>');
+        }
+
         // 1. CONSTANT: MODEL AI DITETAPKAN SEKALI SAHAJA DI SINI
         const AI_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwzwgZfjbaO14ytZVTC08YxUOFm7o4NMWERT3_f_h3md3L0zsA2CmlY_vCgfxVsoaWT1g/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxCUM_3bxlA_Ufn-Ee8ygzju1eXC-HaVNu-o9AnkVqsFSTFY1qvsE364gQDXhcigI4t/exec";
 
         // Web Audio API for Sound Effects
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1053,7 +1061,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
         }
 
         function renderQuiz() {
-            document.getElementById('preNoteText').innerHTML = state.currentQuiz.nota.replace(/\n/g, '<br>');
+            document.getElementById('preNoteText').innerHTML = parseMarkdown(state.currentQuiz.nota).replace(/\n/g, '<br>');
             document.getElementById('questionText').textContent = state.currentQuiz.soalan;
             
             const container = document.getElementById('optionsContainer');
@@ -1099,7 +1107,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                     })
                 });
                 const data = await response.json();
-                document.getElementById('inlineRobotText').innerHTML = `<span class="text-emerald-600 font-black mb-1 block"><i data-lucide="check-circle-2" class="w-5 h-5 inline"></i> Rumusan:</span>${data.choices[0].message.content}`;
+                document.getElementById('inlineRobotText').innerHTML = `<span class="text-emerald-600 font-black mb-1 block"><i data-lucide="check-circle-2" class="w-5 h-5 inline"></i> Rumusan:</span>${parseMarkdown(data.choices[0].message.content)}`;
             } catch (error) {
                 document.getElementById('inlineRobotText').innerHTML = `Jawapan <b>${correctAnswer}</b> adalah sangat tepat! Tahniah! 🎉`;
             }
@@ -1131,7 +1139,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
 
                 const data = await response.json();
                 const clue = data.choices[0].message.content;
-                document.getElementById('inlineRobotText').innerHTML = `<span class="text-amber-600 font-black mb-1 block"><i data-lucide="lightbulb" class="w-5 h-5 inline"></i> Petunjuk:</span>${clue}`;
+                document.getElementById('inlineRobotText').innerHTML = `<span class="text-amber-600 font-black mb-1 block"><i data-lucide="lightbulb" class="w-5 h-5 inline"></i> Petunjuk:</span>${parseMarkdown(clue)}`;
                 appendChat('bot', "Ops, kurang tepat! Cikgu ada berikan petunjuk di bawah soalan, cuba fikir semula dan pilih jawapan lain ya! 🤔");
             } catch (error) {
                 console.error("Ralat Clue:", error);
@@ -1247,10 +1255,12 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 msgClass = `bg-indigo-600 text-white shadow-lg rounded-tr-none border-2 border-indigo-700`;
             }
             
+            const parsedMessage = parseMarkdown(message);
+            
             div.innerHTML = `
                 ${avatar}
                 <div class="p-4 rounded-2xl ${msgClass} text-sm md:text-base font-bold max-w-[80%] leading-relaxed">
-                    ${message}
+                    ${parsedMessage}
                 </div>
             `;
             
