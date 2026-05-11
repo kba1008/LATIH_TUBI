@@ -146,6 +146,9 @@
                 <button onclick="promptPassword()" class="p-2 md:p-3 bg-white/80 hover:bg-white rounded-full transition shadow-md border-2 border-white pointer-events-auto" title="Tetapan & Admin">
                     <i data-lucide="settings" class="w-5 h-5 text-slate-500"></i>
                 </button>
+                <button onclick="logout()" class="p-2 md:p-3 bg-red-50 hover:bg-red-100 rounded-full transition shadow-md border-2 border-rose-200 pointer-events-auto" title="Log Keluar">
+                    <i data-lucide="log-out" class="w-5 h-5 text-red-500"></i>
+                </button>
             </div>
         </div>
     </header>
@@ -183,7 +186,7 @@
                         <i data-lucide="loader-2" class="w-12 h-12 text-indigo-500 animate-spin"></i>
                     </div>
                 </div>
-                <h2 class="text-2xl md:text-4xl font-extrabold text-slate-800 mb-3">Cikgu AI Sedang Berfikir...</h2>
+                <h2 id="loadingText" class="text-2xl md:text-4xl font-extrabold text-slate-800 mb-3">Cikgu AI Sedang Berfikir...</h2>
                 <p class="text-slate-500 font-bold text-lg md:text-xl">Menyediakan soalan istimewa untuk anda.</p>
             </div>
 
@@ -381,6 +384,8 @@
     </div>
 
     <script>
+        // 1. CONSTANT: MODEL AI DITETAPKAN SEKALI SAHAJA DI SINI
+        const AI_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxCUM_3bxlA_Ufn-Ee8ygzju1eXC-HaVNu-o9AnkVqsFSTFY1qvsE364gQDXhcigI4t/exec";
 
         if ('serviceWorker' in navigator) {
@@ -393,13 +398,14 @@
 
         lucide.createIcons();
 
+        // Sesi State
         let state = {
             gasUrl: localStorage.getItem('gasUrl') || DEFAULT_GAS_URL,
             apiKey: '',
             questions: [],
-            answeredTopics: [],
-            currentTopic: '',
-            currentQuiz: null,
+            answeredTopics: JSON.parse(localStorage.getItem('answeredTopics') || '[]'),
+            currentTopic: sessionStorage.getItem('currentTopic') || '',
+            currentQuiz: JSON.parse(sessionStorage.getItem('currentQuiz') || 'null'),
             isProcessing: false,
             playerName: localStorage.getItem('playerName') || '',
             points: parseInt(localStorage.getItem('points')) || 0,
@@ -407,6 +413,29 @@
             noteGenerated: false,
             attempts: 0
         };
+
+        // Kembalikan Sesi pada Refresh
+        window.addEventListener('DOMContentLoaded', () => {
+            state.apiKey = sessionStorage.getItem('apiKey') || '';
+            try {
+                state.questions = JSON.parse(sessionStorage.getItem('questions') || '[]');
+            } catch(e) { state.questions = []; }
+
+            if (state.playerName && state.apiKey && state.currentQuiz) {
+                // Jika refresh semasa kuiz aktif
+                updateHeaderUI();
+                updatePetUI();
+                renderQuiz();
+                showScreen('quizScreen');
+                appendChat('bot', `Selamat kembali, ${state.playerName}! Sesi anda telah dipulihkan.`);
+            } else if (state.playerName) {
+                // Jika refresh di luar kuiz atau apiKey hilang
+                document.getElementById('playerNameInput').value = state.playerName;
+                initApp(true);
+            } else {
+                showScreen('welcomeScreen');
+            }
+        });
 
         const PET_STAGES = [
             { level: 0, emoji: '🥚', scale: 1.0 },
@@ -670,6 +699,29 @@
             closeSettings();
         }
 
+        function logout() {
+            showCustomConfirm("Log Keluar", "Adakah anda pasti mahu log keluar? Sesi anda akan ditamatkan.", "Batal", "Keluar", null, () => {
+                localStorage.removeItem('playerName');
+                localStorage.removeItem('points');
+                localStorage.removeItem('petLevel');
+                localStorage.removeItem('answeredTopics');
+                sessionStorage.clear();
+                
+                state.playerName = '';
+                state.points = 0;
+                state.petLevel = 0;
+                state.answeredTopics = [];
+                state.currentQuiz = null;
+                state.questions = [];
+                state.apiKey = '';
+                
+                updateHeaderUI();
+                updatePetUI();
+                document.getElementById('playerNameInput').value = '';
+                showScreen('welcomeScreen');
+            });
+        }
+
         async function fetchAdminStudents() {
             const listDiv = document.getElementById('adminStudentList');
             listDiv.classList.remove('hidden');
@@ -793,9 +845,9 @@
             }
         }
 
-        async function initApp() {
+        async function initApp(isAuto = false) {
             const nameInput = document.getElementById('playerNameInput').value.trim();
-            if (!nameInput) {
+            if (!nameInput && !isAuto) {
                 showCustomAlert("Sila masukkan nama anda untuk mula.", true);
                 return;
             }
@@ -805,13 +857,18 @@
             updateHeaderUI();
 
             if (!state.gasUrl) {
-                showCustomAlert("Sila masukkan URL Google Web App melalui butang tetapan terlebih dahulu.", true);
+                if(!isAuto) showCustomAlert("Sila masukkan URL Google Web App melalui butang tetapan terlebih dahulu.", true);
                 return;
             }
             
-            const statusEl = document.getElementById('initStatus');
-            statusEl.classList.remove('hidden');
-            statusEl.textContent = "Menyambung pangkalan data AI...";
+            if (isAuto) {
+                showScreen('loadingScreen');
+                document.getElementById('loadingText').textContent = "Menyambung Semula Sesi...";
+            } else {
+                const statusEl = document.getElementById('initStatus');
+                statusEl.classList.remove('hidden');
+                statusEl.textContent = "Menyambung pangkalan data AI...";
+            }
 
             try {
                 const response = await fetch(state.gasUrl, {
@@ -827,8 +884,12 @@
                 if (!data.questions || data.questions.length === 0) throw new Error("Tiada rekod soalan ditemui dalam tab 'SOALAN'.");
 
                 state.apiKey = data.apiKey;
+                sessionStorage.setItem('apiKey', state.apiKey);
                 state.questions = data.questions;
+                sessionStorage.setItem('questions', JSON.stringify(state.questions));
+                
                 state.answeredTopics = data.answeredTopics || [];
+                localStorage.setItem('answeredTopics', JSON.stringify(state.answeredTopics));
                 
                 if(data.userPoints !== undefined) {
                     state.points = data.userPoints;
@@ -841,9 +902,9 @@
                 updateHeaderUI();
                 updatePetUI();
 
-                appendChat('bot', `Selamat kembali, ${state.playerName}! Bersedia untuk cabaran hari ini? `);
+                if(!isAuto) appendChat('bot', `Selamat kembali, ${state.playerName}! Bersedia untuk cabaran hari ini? `);
 
-                if (state.answeredTopics.length > 0 && state.answeredTopics.length < state.questions.length) {
+                if (state.answeredTopics.length > 0 && state.answeredTopics.length < state.questions.length && !isAuto) {
                     showCustomConfirm("Sambung Sesi?", 
                         `Sistem merekodkan anda telah menjawab ${state.answeredTopics.length} soalan sebelum ini. Mahu sambung sesi lepas atau mulakan sesi pusingan baru? (Markah dan Itik kekal).`,
                         "Mula Baru", "Sambung Sesi", 
@@ -857,7 +918,7 @@
                         }
                     );
                 } else if (state.answeredTopics.length >= state.questions.length && state.questions.length > 0) {
-                    showCustomAlert("Anda hebat! Semua soalan telah dicuba. Sesi kitaran baru akan dimulakan.");
+                    if(!isAuto) showCustomAlert("Anda hebat! Semua soalan telah dicuba. Sesi kitaran baru akan dimulakan.");
                     state.answeredTopics = [];
                     saveScoreToGAS();
                     generateNextQuestion();
@@ -868,12 +929,17 @@
             } catch (error) {
                 console.error("Ralat Init App:", error);
                 showCustomAlert("Ralat Sistem: " + error.message, true);
-                statusEl.classList.add('hidden');
+                if(!isAuto) {
+                    document.getElementById('initStatus').classList.add('hidden');
+                } else {
+                    showScreen('welcomeScreen');
+                }
             }
         }
 
         async function generateNextQuestion() {
             showScreen('loadingScreen');
+            document.getElementById('loadingText').textContent = "Cikgu AI Sedang Berfikir...";
             document.getElementById('feedbackArea').classList.add('hidden');
             document.getElementById('inlineRobotHint').classList.add('hidden');
             
@@ -893,12 +959,14 @@
             }
 
             state.currentTopic = availableTopics[0];
+            sessionStorage.setItem('currentTopic', state.currentTopic);
             
             const prompt = `Berdasarkan topik berikut: "${state.currentTopic}", hasilkan:
-1. 1 Soalan objektif berkaitan topik tersebut.
-2. 4 pilihan jawapan (A, B, C, D).
+1. 1 Soalan objektif berkaitan topik tersebut yang logik, tepat, dan tidak mengelirukan.
+2. 4 pilihan jawapan (A, B, C, D). Pastikan pilihan jawapan yang betul adalah tepat secara logik.
 3. Indeks jawapan yang betul (0 untuk A, 1 untuk B, 2 untuk C, 3 untuk D).
 
+Pastikan anda menggunakan Bahasa Melayu standard mengikut Kamus Dewan dan Pustaka.
 Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah, tanpa sebarang teks tambahan atau markdown:
 {
   "soalan": "Teks soalan di sini...",
@@ -914,9 +982,9 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                        model: AI_MODEL,
                         messages: [
-                            { role: "system", content: "Anda ialah sistem guru pakar di Malaysia yang HANYA membalas dalam format JSON yang sah." },
+                            { role: "system", content: "Anda ialah sistem guru pakar di Malaysia. Sila gunakan Bahasa Melayu standard mengikut Kamus Dewan dan Pustaka. HANYA membalas dalam format JSON yang sah." },
                             { role: "user", content: prompt }
                         ],
                         response_format: { type: "json_object" },
@@ -938,6 +1006,8 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 if (!jsonMatch) throw new Error("Format JSON dari AI tidak tepat.");
                 
                 state.currentQuiz = JSON.parse(jsonMatch[0]);
+                sessionStorage.setItem('currentQuiz', JSON.stringify(state.currentQuiz));
+                
                 renderQuiz();
                 showScreen('quizScreen');
 
@@ -978,7 +1048,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             noteArea.classList.remove('hidden');
             noteText.innerHTML = '<span class="animate-pulse text-purple-500 font-bold">Cikgu AI sedang menyusun nota menarik untuk awak... </span>';
 
-            const prompt = `Soalan: ${state.currentQuiz.soalan}\nPilihan Jawapan: ${state.currentQuiz.pilihan.join(", ")}\n\nTolong buatkan nota ringkas dalam bentuk point (senarai pendek). Terangkan macam bercakap dengan budak umur 5 tahun. Guna gaya bahasa yang sangat santai, manja dan senang faham. Kaitkan sikit dengan pilihan jawapan supaya mereka faham konsep, tapi elakkan dari bagi jawapan bocor terus ya!`;
+            const prompt = `Soalan: ${state.currentQuiz.soalan}\nPilihan Jawapan: ${state.currentQuiz.pilihan.join(", ")}\n\nTolong buatkan nota ringkas dalam bentuk point (senarai pendek). Terangkan macam bercakap dengan kanak-kanak berumur 5 tahun. Guna gaya bahasa yang santai, mesra, mudah difahami, tetapi pastikan penggunaan Bahasa Melayu standard (berdasarkan Kamus Dewan dan Pustaka). Kaitkan sikit dengan pilihan jawapan supaya mereka faham konsep, tapi elakkan dari bagi jawapan bocor terus ya!`;
 
             try {
                 const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -988,7 +1058,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                        model: AI_MODEL,
                         messages: [{ role: "user", content: prompt }],
                         temperature: 0.5,
                         max_tokens: 512
@@ -1015,7 +1085,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             const question = state.currentQuiz.soalan;
             const wrongAnswer = state.currentQuiz.pilihan[wrongIndex];
 
-            const prompt = `Soalan: ${question}\nJawapan Murid (Salah): ${wrongAnswer}\n\nSebagai Cikgu AI yang penyayang, murid menjawab salah pada percubaan pertama. JANGAN dedahkan jawapan sebenar. Berikan satu petunjuk (clue) ringkas untuk membimbing murid berfikir semula. Gaya bahasa santai seperti bercakap dengan kanak-kanak. (Maksimum 2 ayat). Letak emoji.`;
+            const prompt = `Soalan: ${question}\nJawapan Murid (Salah): ${wrongAnswer}\n\nSebagai Cikgu AI yang penyayang, murid menjawab salah pada percubaan pertama. JANGAN dedahkan jawapan sebenar. Berikan satu petunjuk (clue) ringkas untuk membimbing murid berfikir semula. Gaya bahasa mesra seperti bercakap dengan kanak-kanak, dan pastikan menggunakan Bahasa Melayu standard mengikut Kamus Dewan dan Pustaka. (Maksimum 2 ayat). Letak emoji.`;
 
             try {
                 const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -1025,7 +1095,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                        model: AI_MODEL,
                         messages: [{ role: "user", content: prompt }],
                         temperature: 0.5,
                         max_tokens: 256
@@ -1058,6 +1128,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 
                 if(!state.answeredTopics.includes(state.currentTopic)) {
                     state.answeredTopics.push(state.currentTopic);
+                    localStorage.setItem('answeredTopics', JSON.stringify(state.answeredTopics));
                 }
                 
                 document.querySelectorAll('.option-btn').forEach(b => {
@@ -1122,6 +1193,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                     
                     if(!state.answeredTopics.includes(state.currentTopic)) {
                         state.answeredTopics.push(state.currentTopic);
+                        localStorage.setItem('answeredTopics', JSON.stringify(state.answeredTopics));
                     }
                     
                     btnElement.style.background = 'rgba(254, 202, 202, 0.8)';
@@ -1170,7 +1242,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             const correctAnswer = state.currentQuiz.pilihan[state.currentQuiz.jawapan_betul];
             const wrongAnswer = state.currentQuiz.pilihan[wrongIndex];
 
-            const prompt = `Soalan: ${question}\nJawapan Sebenar: ${correctAnswer}\nJawapan Murid (Salah): ${wrongAnswer}\n\nSebagai Cikgu AI yang penyayang dan positif, beritahu murid pilihan mereka kurang tepat, beritahu jawapan sebenar ialah '${correctAnswer}', dan berikan sedikit penerangan ringkas kenapa jawapan itu betul. Gunakan gaya bahasa yang sangat mesra, mudah difahami kanak-kanak, dan beri kata-kata semangat. (Maksimum 3-4 ayat). Letak emoji.`;
+            const prompt = `Soalan: ${question}\nJawapan Sebenar: ${correctAnswer}\nJawapan Murid (Salah): ${wrongAnswer}\n\nSebagai Cikgu AI yang penyayang dan positif, beritahu murid pilihan mereka kurang tepat, beritahu jawapan sebenar ialah '${correctAnswer}', dan berikan sedikit penerangan ringkas kenapa jawapan itu betul. Gunakan gaya bahasa yang sangat mesra, mudah difahami kanak-kanak, beri kata-kata semangat dan WAJIB mematuhi Bahasa Melayu standard mengikut Kamus Dewan dan Pustaka. (Maksimum 3-4 ayat). Letak emoji.`;
 
             try {
                 const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -1180,7 +1252,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                        model: AI_MODEL,
                         messages: [{ role: "user", content: prompt }],
                         temperature: 0.5,
                         max_tokens: 256
@@ -1262,7 +1334,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             chatBox.scrollTop = chatBox.scrollHeight;
 
             const context = state.currentQuiz ? `Topik/Soalan semasa yang murid sedang buat: "${state.currentQuiz.soalan}".` : 'Murid berada di laman utama.';
-            const prompt = `Anda ialah Cikgu AI, guru pakar yang comel, mesra dan ceria. ${context} Murid bertanya: "${msg}". Jawab dengan mesra, ringkas (maksimum 3 ayat), gaya bahasa seperti bercakap dengan kanak-kanak, dan pastikan guna emoji yang sesuai.`;
+            const prompt = `Anda ialah Cikgu AI, guru pakar yang comel, mesra dan ceria. ${context} Murid bertanya: "${msg}". Jawab dengan mesra, ringkas (maksimum 3 ayat), gaya bahasa seperti bercakap dengan kanak-kanak, dan WAJIB mematuhi tatabahasa Bahasa Melayu standard mengikut Kamus Dewan dan Pustaka. Pastikan guna emoji yang sesuai.`;
 
             try {
                 const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -1272,7 +1344,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                        model: AI_MODEL,
                         messages: [{ role: "user", content: prompt }],
                         temperature: 0.7,
                         max_tokens: 256
