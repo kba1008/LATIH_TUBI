@@ -381,18 +381,18 @@
             if (!text) return "";
             
             let parsed = text
+                // 1. Convert any list items starting with *, •, or + to -
+                .replace(/^(\s*)(?:[\*\•\+])\s+/gm, '$1- ')
+                // 2. Highlight keywords wrapped in ** or __
                 .replace(/\*\*(.*?)\*\*/g, '<mark class="bg-yellow-300 text-indigo-900 font-black px-1.5 py-0.5 rounded shadow-sm">$1</mark>')
                 .replace(/__(.*?)__/g, '<mark class="bg-yellow-300 text-indigo-900 font-black px-1.5 py-0.5 rounded shadow-sm">$1</mark>');
-            
-            // Penambahan keselamatan untuk menukar bullet point asal (*) kepada (-)
-            parsed = parsed.replace(/^(\s*)\*\s+/gm, '$1- ');
             
             return parsed;
         }
 
         // 1. CONSTANT: MODEL AI DITETAPKAN SEKALI SAHAJA DI SINI
         const AI_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwWuyKn0VV0MIwOgAHb1jykQjdvex4yJYrvtev_IVok15DkyeNdLEPwVZaeXE0adinQ_w/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxCUM_3bxlA_Ufn-Ee8ygzju1eXC-HaVNu-o9AnkVqsFSTFY1qvsE364gQDXhcigI4t/exec";
 
         // Web Audio API for Sound Effects
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -539,7 +539,7 @@
                 } else {
                     currentX = e.clientX - initialX;
                     currentY = e.clientY - initialY;
-                }
+                }   
                 xOffset = currentX;
                 yOffset = currentY;
                 setTranslate(currentX, currentY, petContainer);
@@ -1009,16 +1009,16 @@
             sessionStorage.setItem('currentTopic', state.currentTopic);
             
             const prompt = `Berdasarkan topik berikut: "${state.currentTopic}", hasilkan:
-1. 1 Nota ulangkaji yang padat, komprehensif, dan dikembangkan isinya (tidak terlalu ringkas). Susun nota ini supaya ia memukau dan terus masuk ke jiwa serta otak murid! Gunakan gaya bahasa seorang guru pakar subjek yang hebat, sangat menarik, bersemangat, penyayang, santai dan sempoi (mesra kanak-kanak/remaja). Fakta wajib tepat mengikut ejaan dan tatabahasa Bahasa Melayu standard Kamus Dewan dan Pustaka.
-2. Gunakan simbol sempang (-) sebagai penanda untuk setiap senarai poin penting. JANGAN gunakan simbol bintang (*).
-3. Untuk mengajar murid cara mencatat nota yang betul, kenal pasti kata kunci atau poin paling kritikal dan letakkannya di dalam kurungan bintang berganda (contoh: **kata kunci penting**). Sistem akan secara automatik mewarnakan teks ini dengan warna kuning (highlight) untuk menguatkan memori murid.
+1. 1 Nota ulangkaji yang padat, komprehensif, dan dikembangkan isinya (tidak terlalu ringkas). Susun nota ini supaya ia memukau dan terus masuk ke jiwa serta otak murid! Gunakan gaya bahasa seorang guru pakar subjek yang hebat, sangat menarik, bersemangat, penyayang, santai dan sempoi (mesra kanak-kanak/remaja). Fakta wajib tepat.
+2. WAJIB gunakan simbol sempang (-) sebagai penanda peluru (bullet points) untuk menyenaraikan isi penting. DILARANG SAMA SEKALI menggunakan simbol bintang (*) sebagai penanda peluru.
+3. Untuk mengajar murid cara mencatat nota yang betul, WAJIB kenal pasti beberapa kata kunci atau poin paling kritikal dan letakkannya di dalam kurungan bintang berganda (contoh: **kata kunci penting**). Sistem akan mewarnakan teks ini dengan highlight kuning untuk membantu daya ingatan murid.
 4. 1 Soalan objektif berdasarkan nota tersebut yang logik dan tidak mengelirukan.
 5. 4 pilihan jawapan (A, B, C, D). Pastikan pilihan jawapan yang betul adalah tepat.
 6. Indeks jawapan yang betul (0 untuk A, 1 untuk B, 2 untuk C, 3 untuk D).
 
 Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah, tanpa sebarang teks tambahan:
 {
-  "nota": "Teks nota pakar yang hebat, berpoin (-) & ber-emoji di sini...",
+  "nota": "Teks nota pakar yang hebat, berpoin (-) & mempunyai **kata kunci highlight** di sini...",
   "soalan": "Teks soalan di sini...",
   "pilihan": ["Pilihan 1", "Pilihan 2", "Pilihan 3", "Pilihan 4"],
   "jawapan_betul": 0
