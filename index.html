@@ -140,6 +140,10 @@
                     <span id="headerPlayerName" class="text-base font-bold text-slate-700">-</span>
                     <span class="text-xs md:text-sm text-indigo-600 font-black bg-indigo-100 px-3 py-1 rounded-full mt-1 shadow-inner"><span id="headerPoints">0</span> Mata</span>
                 </div>
+                <!-- Butang Pilih Set Latihan (Muncul selepas daftar) -->
+                <button onclick="goToSetSelection()" id="btnSetSelection" class="hidden p-2 md:p-3 bg-white/80 hover:bg-white rounded-full transition shadow-md border-2 border-white pointer-events-auto" title="Tukar Set Latihan">
+                    <i data-lucide="layers" class="w-5 h-5 text-indigo-500"></i>
+                </button>
                 <button onclick="showLeaderboard()" class="p-2 md:p-3 bg-white/80 hover:bg-white rounded-full transition shadow-md border-2 border-white pointer-events-auto" title="Papan Pendahulu">
                     <i data-lucide="trophy" class="w-5 h-5 text-amber-500"></i>
                 </button>
@@ -178,6 +182,16 @@
                 <p id="initStatus" class="text-lg text-indigo-600 font-bold mt-8 hidden animate-pulse bg-indigo-50 py-3 px-6 rounded-full mx-auto inline-block border-2 border-indigo-200">Menyambung ke pelayan AI...</p>
             </div>
 
+            <!-- Set Selection Screen -->
+            <div id="setSelectionScreen" class="hidden glass-panel rounded-[2.5rem] p-8 md:p-12 text-center fade-in shadow-2xl flex-grow flex flex-col justify-center">
+                <h2 class="text-3xl md:text-5xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Pilih Set Latihan</h2>
+                <p class="text-slate-600 mb-8 font-bold text-lg md:text-xl max-w-2xl mx-auto">Pilih set soalan yang ingin anda kuasai hari ini.</p>
+                
+                <div id="setsContainer" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 w-full mx-auto overflow-y-auto max-h-[60vh] p-2 custom-scrollbar">
+                    <!-- Buttons injected here -->
+                </div>
+            </div>
+
             <!-- Loading State -->
             <div id="loadingScreen" class="glass-panel rounded-[2.5rem] p-12 text-center hidden fade-in shadow-2xl">
                 <div class="relative w-24 h-24 mx-auto mb-8">
@@ -195,11 +209,16 @@
                 
                 <!-- Pre-Note Area (Shown First) -->
                 <div id="preNoteArea" class="glass-panel p-6 md:p-10 lg:p-12 rounded-[2.5rem] shadow-2xl mb-6">
-                    <div class="flex items-center gap-3 mb-6 text-indigo-700 font-black text-xl md:text-2xl">
-                        <div class="p-2 bg-indigo-200 rounded-full animate-pulse">
-                            <i data-lucide="book-open" class="w-6 h-6"></i>
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3 text-indigo-700 font-black text-xl md:text-2xl">
+                            <div class="p-2 bg-indigo-200 rounded-full animate-pulse">
+                                <i data-lucide="book-open" class="w-6 h-6"></i>
+                            </div>
+                            <h3>Baca & Fahami (Nota Cikgu AI)</h3>
                         </div>
-                        <h3>Baca & Fahami (Nota Cikgu AI)</h3>
+                        <span id="currentSetNameDisplay" class="hidden sm:inline-block bg-white text-indigo-600 border-2 border-indigo-100 font-black text-sm px-4 py-1.5 rounded-full shadow-sm">
+                            <!-- Set Name -->
+                        </span>
                     </div>
                     <div id="preNoteText" class="text-slate-800 text-lg md:text-xl font-bold leading-relaxed whitespace-pre-wrap bg-white/80 p-6 rounded-2xl border-2 border-indigo-100 shadow-sm mb-8"></div>
                     
@@ -376,25 +395,22 @@
     </div>
 
     <script>
-        // Helper untuk Parse Markdown Text (Menukar ** kepada teks highlight kuning)
+        // Helper untuk Parse Markdown Text
         function parseMarkdown(text) {
             if (!text) return "";
             
             let parsed = text
-                // 1. Convert any list items starting with *, •, or + to -
                 .replace(/^(\s*)(?:[\*\•\+])\s+/gm, '$1- ')
-                // 2. Highlight keywords wrapped in ** or __
                 .replace(/\*\*(.*?)\*\*/g, '<mark class="bg-yellow-300 text-indigo-900 font-black px-1.5 py-0.5 rounded shadow-sm">$1</mark>')
                 .replace(/__(.*?)__/g, '<mark class="bg-yellow-300 text-indigo-900 font-black px-1.5 py-0.5 rounded shadow-sm">$1</mark>');
             
             return parsed;
         }
 
-        // 1. CONSTANT: MODEL AI DITETAPKAN SEKALI SAHAJA DI SINI
         const AI_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbys0zMT1ocDcHj_E48S6QHYTmiYgnRpHygSeZCkFQCRHLA7hdOsKFuRupdpndI1byQBfg/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxCUM_3bxlA_Ufn-Ee8ygzju1eXC-HaVNu-o9AnkVqsFSTFY1qvsE364gQDXhcigI4t/exec";
 
-        // Web Audio API for Sound Effects
+        // Web Audio API
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
 
@@ -406,10 +422,10 @@
             osc.connect(gainNode);
             gainNode.connect(audioCtx.destination);
             
-            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
-            osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
-            osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3); // C6
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+            osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3);
             
             gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
             gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
@@ -448,12 +464,16 @@
 
         lucide.createIcons();
 
-        // Sesi State
+        // Sesi State Update untuk menyokong pelbagai SET
+        let savedTopics = JSON.parse(localStorage.getItem('answeredTopics') || '{}');
+        if (Array.isArray(savedTopics)) savedTopics = {}; // Migrate data lama
+
         let state = {
             gasUrl: localStorage.getItem('gasUrl') || DEFAULT_GAS_URL,
             apiKey: '',
-            questions: [],
-            answeredTopics: JSON.parse(localStorage.getItem('answeredTopics') || '[]'),
+            questionSets: [], // Array of { setName: '', topics: [] }
+            answeredTopics: savedTopics, // Objek: { "Set A": ["Topik 1", "Topik 2"] }
+            currentSet: sessionStorage.getItem('currentSet') || null,
             currentTopic: sessionStorage.getItem('currentTopic') || '',
             currentQuiz: JSON.parse(sessionStorage.getItem('currentQuiz') || 'null'),
             isProcessing: false,
@@ -463,19 +483,26 @@
             attempts: 0
         };
 
-        // Kembalikan Sesi pada Refresh
         window.addEventListener('DOMContentLoaded', () => {
             state.apiKey = sessionStorage.getItem('apiKey') || '';
             try {
-                state.questions = JSON.parse(sessionStorage.getItem('questions') || '[]');
-            } catch(e) { state.questions = []; }
+                state.questionSets = JSON.parse(sessionStorage.getItem('questionSets') || '[]');
+            } catch(e) { state.questionSets = []; }
 
-            if (state.playerName && state.apiKey && state.currentQuiz) {
+            if (state.playerName && state.apiKey && state.currentSet && state.currentQuiz) {
                 updateHeaderUI();
                 updatePetUI();
                 renderQuiz();
+                document.getElementById('btnSetSelection').classList.remove('hidden');
                 showScreen('quizScreen');
                 appendChat('bot', `Selamat kembali, ${state.playerName}! Sesi anda telah dipulihkan.`);
+            } else if (state.playerName && state.apiKey && state.questionSets.length > 0) {
+                updateHeaderUI();
+                updatePetUI();
+                document.getElementById('btnSetSelection').classList.remove('hidden');
+                renderSetSelection();
+                showScreen('setSelectionScreen');
+                appendChat('bot', `Selamat kembali, ${state.playerName}! Sila pilih set latihan.`);
             } else if (state.playerName) {
                 document.getElementById('playerNameInput').value = state.playerName;
                 initApp(true);
@@ -498,15 +525,10 @@
 
         const FOOD_TYPES = ['🍞', '🌽', '🥬', '🐛', '🌱', '🌾', '🐟', '🦐', '🥖', '🌿'];
 
-        // Dragging Logic for Pet
+        // Dragging Logic
         const petContainer = document.getElementById('petContainer');
         let isDragging = false;
-        let currentX = 0;
-        let currentY = 0;
-        let initialX = 0;
-        let initialY = 0;
-        let xOffset = 0;
-        let yOffset = 0;
+        let currentX = 0, currentY = 0, initialX = 0, initialY = 0, xOffset = 0, yOffset = 0;
 
         function dragStart(e) {
             if (e.type === "touchstart") {
@@ -522,7 +544,7 @@
             }
         }
 
-        function dragEnd(e) {
+        function dragEnd() {
             if (!isDragging) return;
             initialX = currentX;
             initialY = currentY;
@@ -757,11 +779,13 @@
                 state.playerName = '';
                 state.points = 0;
                 state.petLevel = 0;
-                state.answeredTopics = [];
+                state.answeredTopics = {};
+                state.currentSet = null;
                 state.currentQuiz = null;
-                state.questions = [];
+                state.questionSets = [];
                 state.apiKey = '';
                 
+                document.getElementById('btnSetSelection').classList.add('hidden');
                 updateHeaderUI();
                 updatePetUI();
                 document.getElementById('playerNameInput').value = '';
@@ -836,10 +860,17 @@
         }
 
         function showScreen(screenId) {
-            ['welcomeScreen', 'loadingScreen', 'quizScreen'].forEach(id => {
+            ['welcomeScreen', 'loadingScreen', 'setSelectionScreen', 'quizScreen'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             });
             document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function goToSetSelection() {
+            state.currentSet = null;
+            sessionStorage.removeItem('currentSet');
+            renderSetSelection();
+            showScreen('setSelectionScreen');
         }
 
         async function showLeaderboard() {
@@ -928,14 +959,15 @@
                 const data = await response.json();
                 
                 if (data.error) throw new Error(data.error);
-                if (!data.questions || data.questions.length === 0) throw new Error("Tiada rekod soalan ditemui dalam tab 'SOALAN'.");
+                if (!data.questionSets || data.questionSets.length === 0) throw new Error("Tiada rekod set soalan ditemui dalam tab 'SOALAN'.");
 
                 state.apiKey = data.apiKey;
                 sessionStorage.setItem('apiKey', state.apiKey);
-                state.questions = data.questions;
-                sessionStorage.setItem('questions', JSON.stringify(state.questions));
                 
-                state.answeredTopics = data.answeredTopics || [];
+                state.questionSets = data.questionSets;
+                sessionStorage.setItem('questionSets', JSON.stringify(state.questionSets));
+                
+                state.answeredTopics = data.answeredTopics || {};
                 localStorage.setItem('answeredTopics', JSON.stringify(state.answeredTopics));
                 
                 if(data.userPoints !== undefined) {
@@ -946,32 +978,15 @@
                     state.petLevel = data.petLevel;
                     localStorage.setItem('petLevel', state.petLevel);
                 }
+                
                 updateHeaderUI();
                 updatePetUI();
+                document.getElementById('btnSetSelection').classList.remove('hidden');
 
-                if(!isAuto) appendChat('bot', `Selamat kembali, ${state.playerName}! Bersedia untuk cabaran hari ini? `);
+                if(!isAuto) appendChat('bot', `Selamat kembali, ${state.playerName}! Bersedia untuk cabaran hari ini? Sila pilih set latihan anda.`);
 
-                if (state.answeredTopics.length > 0 && state.answeredTopics.length < state.questions.length && !isAuto) {
-                    showCustomConfirm("Sambung Sesi?", 
-                        `Sistem merekodkan anda telah menjawab ${state.answeredTopics.length} soalan sebelum ini. Mahu sambung sesi lepas atau mulakan sesi pusingan baru? (Markah dan Itik kekal).`,
-                        "Mula Baru", "Sambung Sesi", 
-                        () => {
-                            state.answeredTopics = [];
-                            saveScoreToGAS();
-                            generateNextQuestion();
-                        }, 
-                        () => {
-                            generateNextQuestion();
-                        }
-                    );
-                } else if (state.answeredTopics.length >= state.questions.length && state.questions.length > 0) {
-                    if(!isAuto) showCustomAlert("Anda hebat! Semua soalan telah dicuba. Sesi kitaran baru akan dimulakan.");
-                    state.answeredTopics = [];
-                    saveScoreToGAS();
-                    generateNextQuestion();
-                } else {
-                    await generateNextQuestion();
-                }
+                renderSetSelection();
+                showScreen('setSelectionScreen');
 
             } catch (error) {
                 console.error("Ralat Init App:", error);
@@ -981,6 +996,64 @@
                 } else {
                     showScreen('welcomeScreen');
                 }
+            }
+        }
+
+        function renderSetSelection() {
+            const container = document.getElementById('setsContainer');
+            container.innerHTML = '';
+
+            state.questionSets.forEach((set, index) => {
+                const totalTopics = set.topics.length;
+                const answeredCount = state.answeredTopics[set.setName] ? state.answeredTopics[set.setName].length : 0;
+                const isComplete = answeredCount >= totalTopics && totalTopics > 0;
+                
+                let progressColor = isComplete ? 'text-emerald-600 bg-emerald-100 border-emerald-200' : 'text-indigo-600 bg-indigo-100 border-indigo-200';
+                let icon = isComplete ? '<i data-lucide="check-circle" class="w-8 h-8 text-emerald-500"></i>' : '<i data-lucide="folder" class="w-8 h-8 text-indigo-500"></i>';
+
+                const btn = document.createElement('button');
+                btn.className = `glass-button p-6 rounded-3xl flex flex-col items-center justify-center text-center transition-all shadow-md hover:shadow-xl border-2 border-white/80 group transform hover:-translate-y-1 ${isComplete ? 'opacity-90' : ''}`;
+                btn.onclick = () => selectSet(set.setName);
+                
+                btn.innerHTML = `
+                    <div class="p-4 rounded-full bg-white shadow-inner border border-slate-100 mb-4 group-hover:scale-110 transition-transform">
+                        ${icon}
+                    </div>
+                    <h3 class="text-xl md:text-2xl font-black text-slate-800 mb-2 truncate w-full">${set.setName}</h3>
+                    <div class="px-3 py-1.5 rounded-full font-bold text-sm md:text-base border ${progressColor}">
+                        ${answeredCount} / ${totalTopics} Selesai
+                    </div>
+                `;
+                container.appendChild(btn);
+            });
+            lucide.createIcons();
+        }
+
+        async function selectSet(setName) {
+            state.currentSet = setName;
+            sessionStorage.setItem('currentSet', state.currentSet);
+            
+            const setObj = state.questionSets.find(s => s.setName === setName);
+            if(!setObj) return;
+            
+            const answered = state.answeredTopics[setName] || [];
+            if (answered.length >= setObj.topics.length && setObj.topics.length > 0) {
+                showCustomConfirm(
+                    "Set Telah Selesai!", 
+                    `Tahniah! Anda telah melengkapkan semua ${setObj.topics.length} soalan dalam set ini. Mahu ulang semula latihan untuk set ini?`,
+                    "Batal", "Mula Semula",
+                    () => {
+                        state.currentSet = null;
+                        sessionStorage.removeItem('currentSet');
+                    },
+                    () => {
+                        state.answeredTopics[setName] = [];
+                        saveScoreToGAS();
+                        generateNextQuestion();
+                    }
+                );
+            } else {
+                await generateNextQuestion();
             }
         }
 
@@ -997,12 +1070,20 @@
             
             state.attempts = 0;
             
-            let availableTopics = state.questions.filter(q => !state.answeredTopics.includes(q));
+            const currentSetData = state.questionSets.find(s => s.setName === state.currentSet);
+            if(!currentSetData) {
+                showCustomAlert("Ralat memuatkan set soalan.", true);
+                goToSetSelection();
+                return;
+            }
+
+            let answeredInSet = state.answeredTopics[state.currentSet] || [];
+            let availableTopics = currentSetData.topics.filter(t => !answeredInSet.includes(t));
+
             if(availableTopics.length === 0) {
-                appendChat('bot', 'Wah, anda telah selesaikan semua topik! Mari kita mula kitaran ulang kaji semula. ');
-                state.answeredTopics = [];
-                availableTopics = state.questions;
-                saveScoreToGAS();
+                appendChat('bot', `Wah, anda telah selesaikan semua topik dalam ${state.currentSet}! Sila pilih set lain atau ulang semula. `);
+                goToSetSelection();
+                return;
             }
 
             state.currentTopic = availableTopics[0];
@@ -1064,11 +1145,15 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             } catch (error) {
                 console.error("Ralat Penjanaan Soalan:", error);
                 showCustomAlert("Ada ralat semasa menjana soalan AI: " + error.message + ". Sila cuba lagi.", true);
-                showScreen('welcomeScreen');
+                goToSetSelection();
             }
         }
 
         function renderQuiz() {
+            const nameDisplay = document.getElementById('currentSetNameDisplay');
+            nameDisplay.textContent = state.currentSet;
+            nameDisplay.classList.remove('hidden');
+
             document.getElementById('preNoteText').innerHTML = parseMarkdown(state.currentQuiz.nota).replace(/\n/g, '<br>');
             document.getElementById('questionText').textContent = state.currentQuiz.soalan;
             
@@ -1168,8 +1253,12 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 state.isProcessing = true;
                 playCorrectSound();
                 
-                if(!state.answeredTopics.includes(state.currentTopic)) {
-                    state.answeredTopics.push(state.currentTopic);
+                if (!state.answeredTopics[state.currentSet]) {
+                    state.answeredTopics[state.currentSet] = [];
+                }
+
+                if(!state.answeredTopics[state.currentSet].includes(state.currentTopic)) {
+                    state.answeredTopics[state.currentSet].push(state.currentTopic);
                     localStorage.setItem('answeredTopics', JSON.stringify(state.answeredTopics));
                 }
                 
