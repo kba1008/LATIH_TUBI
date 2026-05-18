@@ -8,6 +8,8 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Confetti Library for Revision Mode Fireworks -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- HTML2PDF Library for Exam Slip Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="manifest" href="manifest.json">
     
     <!-- Google Font Mesra Kanak-kanak -->
@@ -224,9 +226,9 @@
             <div id="quizScreen" class="hidden fade-in space-y-6">
                 
                 <!-- Status Bar Peperiksaan/Ulangkaji -->
-                <div id="quizStatusBar" class="hidden sticky top-[80px] z-40 bg-white/95 backdrop-blur-md p-4 md:p-5 rounded-[2rem] shadow-xl border-4 border-indigo-100 mb-6 flex justify-between items-center transition-all">
-                    <div class="flex items-center gap-4">
-                        <div class="bg-slate-800 text-white px-5 py-2.5 rounded-2xl font-mono text-xl md:text-2xl shadow-inner border-2 border-slate-600 flex items-center gap-3">
+                <div id="quizStatusBar" class="hidden sticky top-[80px] z-40 bg-white/95 backdrop-blur-md p-4 md:p-5 rounded-[2rem] shadow-xl border-4 border-indigo-100 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 transition-all">
+                    <div class="flex items-center gap-4 w-full md:w-auto">
+                        <div class="bg-slate-800 text-white px-5 py-2.5 rounded-2xl font-mono text-xl md:text-2xl shadow-inner border-2 border-slate-600 flex items-center gap-3 min-w-[120px] justify-center">
                             <i data-lucide="clock" class="w-6 h-6 text-amber-400 animate-pulse"></i>
                             <span id="timerText" class="font-black tracking-widest">00:00</span>
                         </div>
@@ -235,9 +237,12 @@
                             <p id="questionProgressText" class="text-lg md:text-xl font-black text-indigo-600">Soalan - / -</p>
                         </div>
                     </div>
-                    <div id="examPauseBtnContainer" class="hidden">
-                        <button onclick="pauseExam()" class="bg-amber-100 hover:bg-amber-200 text-amber-700 font-black py-2 px-4 rounded-xl transition shadow-md border border-amber-300 flex items-center gap-2">
-                            <i data-lucide="pause-circle" class="w-5 h-5"></i> <span class="hidden sm:inline">Jeda</span>
+                    <div id="examPauseBtnContainer" class="hidden flex gap-2 w-full md:w-auto">
+                        <button onclick="pauseExam()" class="flex-1 md:flex-none bg-amber-100 hover:bg-amber-200 text-amber-700 font-black py-2 px-4 rounded-xl transition shadow-md border border-amber-300 flex items-center justify-center gap-2">
+                            <i data-lucide="pause-circle" class="w-5 h-5"></i> <span>Jeda</span>
+                        </button>
+                        <button onclick="forceEndExam()" class="flex-1 md:flex-none bg-rose-100 hover:bg-rose-200 text-rose-700 font-black py-2 px-4 rounded-xl transition shadow-md border border-rose-300 flex items-center justify-center gap-2" title="Tamat Peperiksaan">
+                            <i data-lucide="stop-circle" class="w-5 h-5"></i> <span>Tamat</span>
                         </button>
                     </div>
                 </div>
@@ -362,7 +367,15 @@
                 </div>
             </div>
             
-            <button onclick="closeExamSlip()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-4 rounded-xl transition shadow-xl text-xl">Tutup & Keluar</button>
+            <div id="slipActionBtns" class="flex flex-col sm:flex-row gap-3 mb-6">
+                <button onclick="downloadPDF()" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-black py-3 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                    <i data-lucide="file-down" class="w-5 h-5"></i> Simpan PDF
+                </button>
+                <button onclick="shareResult()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-black py-3 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                    <i data-lucide="share-2" class="w-5 h-5"></i> Kongsi Result
+                </button>
+            </div>
+            <button onclick="closeExamSlip()" id="btnCloseSlip" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-4 rounded-xl transition shadow-xl text-xl">Tutup & Keluar</button>
         </div>
     </div>
 
@@ -435,7 +448,7 @@
             <hr class="border-slate-300/50 my-6">
             
             <h4 class="text-xl font-bold mb-4 text-slate-800 flex items-center gap-2"><i data-lucide="layers" class="w-6 h-6"></i> Pengurusan Set Soalan</h4>
-            <div id="adminSetList" class="space-y-2 max-h-52 overflow-y-auto mb-5 p-3 bg-white/60 rounded-2xl border-2 border-white custom-scrollbar"></div>
+            <div id="adminSetList" class="space-y-2 max-h-64 overflow-y-auto mb-5 p-3 bg-white/60 rounded-2xl border-2 border-white custom-scrollbar"></div>
             
             <hr class="border-slate-300/50 my-6">
             
@@ -500,7 +513,7 @@
         }
 
         const AI_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyjl4es9OOXX0JspzUXcSRVGUMb8K0PFP_wlRcTPgL4q3_Ze-ocbO5hBJ2ucKGgrQlRhw/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwtYQQ4Uk7MUwFuSSk8I3R04Zl22_YKF_ySWuKyPJar-m17yRH4IBlNluSouu_v_rv-zA/exec";
 
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
@@ -557,6 +570,7 @@
             globalMode: 'ulangkaji', 
             apiKey: '',
             questionSets: [], 
+            setDurations: {}, // Data masa dari GAS
             answeredTopics: savedTopics, 
             currentSet: sessionStorage.getItem('currentSet') || null,
             currentTopic: sessionStorage.getItem('currentTopic') || '',
@@ -579,6 +593,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             state.apiKey = sessionStorage.getItem('apiKey') || '';
             try { state.questionSets = JSON.parse(sessionStorage.getItem('questionSets') || '[]'); } catch(e) { state.questionSets = []; }
+            try { state.setDurations = JSON.parse(sessionStorage.getItem('setDurations') || '{}'); } catch(e) { state.setDurations = {}; }
             state.globalMode = sessionStorage.getItem('globalMode') || 'ulangkaji';
             updateModeIndicator();
 
@@ -1016,24 +1031,69 @@
             }
             state.questionSets.forEach(set => {
                 const isActive = set.isActive !== false;
-                const btnColor = isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700';
-                const btnText = isActive ? 'Aktif' : 'Nyahaktif';
-                const icon = isActive ? 'check-circle' : 'x-circle';
+                const duration = state.setDurations[set.setName] || 0;
                 
                 listDiv.innerHTML += `
-                    <div class="flex justify-between items-center p-3 border-b border-slate-200">
-                        <span class="font-bold text-base text-slate-800">${set.setName}</span>
-                        <button onclick="adminToggleSet('${set.setName}')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm transition hover:opacity-80 ${btnColor}">
-                            <i data-lucide="${icon}" class="w-4 h-4"></i> ${btnText}
-                        </button>
+                    <div class="flex flex-col gap-3 p-4 border-b border-slate-200 bg-white/50 rounded-xl">
+                        <div class="flex justify-between items-center">
+                            <span class="font-black text-lg text-slate-800">${set.setName}</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" ${isActive ? 'checked' : ''} onchange="adminToggleSet('${set.setName}')">
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-100/50 p-2 rounded-lg">
+                            <span class="text-sm font-bold text-slate-600"><i data-lucide="clock" class="w-4 h-4 inline mr-1"></i>Masa Maksimum:</span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" min="0" value="${duration}" id="dur_${set.setName}" class="w-16 p-1.5 border-2 border-slate-200 rounded-lg text-center text-slate-800 font-black outline-none focus:border-indigo-400">
+                                <span class="text-xs font-bold text-slate-500">min</span>
+                                <button onclick="adminSaveDuration('${set.setName}')" class="bg-indigo-500 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-600 text-xs font-bold shadow-md transition ml-1">Set</button>
+                            </div>
+                        </div>
                     </div>
                 `;
             });
             lucide.createIcons();
         }
 
-        function adminToggleSet(setName) {
-            showCustomConfirm("Ubah Status Set?", `Adakah anda pasti mahu mengubah status bagi set '${setName}'?`, "Batal", "Pasti", null, () => adminAction('toggle_set', setName));
+        async function adminToggleSet(setName) {
+            try {
+                const response = await fetch(state.gasUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'admin_action', adminPwd: '101010', task: 'toggle_set', targetName: setName })
+                });
+                const data = await response.json();
+                if(!data.success) throw new Error(data.error);
+
+                const set = state.questionSets.find(s => s.setName === setName);
+                if (set) set.isActive = !set.isActive;
+                sessionStorage.setItem('questionSets', JSON.stringify(state.questionSets));
+                renderSetSelection();
+            } catch(e) {
+                showCustomAlert("Ralat Admin: " + e.message, true);
+                renderAdminSets();
+            }
+        }
+
+        async function adminSaveDuration(setName) {
+            const val = document.getElementById(`dur_${setName}`).value;
+            try {
+                const response = await fetch(state.gasUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'admin_action', adminPwd: '101010', task: 'set_duration', targetName: setName, duration: val })
+                });
+                const data = await response.json();
+                if(!data.success) throw new Error(data.error);
+
+                if(!state.setDurations) state.setDurations = {};
+                state.setDurations[setName] = parseInt(val) || 0;
+                sessionStorage.setItem('setDurations', JSON.stringify(state.setDurations));
+                showCustomAlert(`Masa peperiksaan bagi '${setName}' telah ditetapkan kepada ${val} minit.`);
+            } catch(e) {
+                showCustomAlert("Ralat Admin: " + e.message, true);
+            }
         }
 
         async function fetchAdminStudents() {
@@ -1086,14 +1146,7 @@
                 const data = await response.json();
                 if(!data.success) throw new Error(data.error);
                 
-                if (task === 'toggle_set') {
-                    const set = state.questionSets.find(s => s.setName === targetName);
-                    if (set) set.isActive = !set.isActive;
-                    sessionStorage.setItem('questionSets', JSON.stringify(state.questionSets));
-                    renderAdminSets();
-                    renderSetSelection();
-                    showCustomAlert(`Status set '${targetName}' berjaya dikemaskini!`);
-                } else if (task !== 'set_mode') {
+                if (task !== 'set_mode') {
                     showCustomAlert("Tindakan berjaya dilaksanakan!");
                     fetchAdminStudents();
                 }
@@ -1124,10 +1177,16 @@
         function goToSetSelection() {
             if (state.timerInterval && state.globalMode === 'peperiksaan') {
                 showCustomConfirm(
-                    "Jeda Peperiksaan?", 
-                    "Masa peperiksaan sedang berjalan! Anda mahu keluar sementara? Masa dan jawapan anda akan disimpan dan boleh disambung kemudian.", 
-                    "Batal", "Jeda & Keluar", null, 
-                    () => pauseExam()
+                    "Keluar ke Menu?", 
+                    "Masa peperiksaan sedang berjalan! Anda mahu keluar sementara? Sila gunakan butang 'Jeda' jika mahu berehat.", 
+                    "Batal", "Teruskan", null, 
+                    () => {
+                        stopTimerUI();
+                        state.currentSet = null;
+                        sessionStorage.removeItem('currentSet');
+                        renderSetSelection();
+                        showScreen('setSelectionScreen');
+                    }
                 );
                 return;
             }
@@ -1230,6 +1289,8 @@
                 sessionStorage.setItem('apiKey', state.apiKey);
                 state.questionSets = data.questionSets;
                 sessionStorage.setItem('questionSets', JSON.stringify(state.questionSets));
+                state.setDurations = data.setDurations || {};
+                sessionStorage.setItem('setDurations', JSON.stringify(state.setDurations));
                 state.answeredTopics = data.answeredTopics || {};
                 localStorage.setItem('answeredTopics', JSON.stringify(state.answeredTopics));
                 
@@ -1288,7 +1349,8 @@
                         statusText = "Terjeda (Boleh Disambung)";
                         isComplete = false;
                     } else {
-                        statusText = `${totalTopics} Soalan Peperiksaan`;
+                        const limit = state.setDurations[set.setName];
+                        statusText = limit ? `${totalTopics} Soalan (${limit} minit)` : `${totalTopics} Soalan Peperiksaan`;
                     }
                 }
 
@@ -1320,11 +1382,36 @@
             if(!isResume) state.timerSeconds = 0;
             clearInterval(state.timerInterval);
             document.getElementById('quizStatusBar').classList.remove('hidden');
+
+            const maxMins = (state.setDurations && state.setDurations[state.currentSet]) ? state.setDurations[state.currentSet] : 0;
+            const maxSecs = parseInt(maxMins) * 60;
+
             state.timerInterval = setInterval(() => {
                 state.timerSeconds++;
-                const m = String(Math.floor(state.timerSeconds / 60)).padStart(2, '0');
-                const s = String(state.timerSeconds % 60).padStart(2, '0');
-                document.getElementById('timerText').textContent = `${m}:${s}`;
+                
+                if (state.globalMode === 'peperiksaan' && maxSecs > 0) {
+                    let timeLeft = maxSecs - state.timerSeconds;
+                    if (timeLeft <= 0) {
+                        timeLeft = 0;
+                        clearInterval(state.timerInterval);
+                        showCustomAlert("Masa peperiksaan telah tamat! Jawapan dihantar secara automatik.");
+                        endExamSession(true);
+                    }
+                    const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+                    const s = String(timeLeft % 60).padStart(2, '0');
+                    document.getElementById('timerText').textContent = `${m}:${s}`;
+                    
+                    if (timeLeft <= 60 && timeLeft > 0) {
+                        document.getElementById('timerText').classList.add('text-rose-500', 'animate-pulse');
+                    } else {
+                        document.getElementById('timerText').classList.remove('text-rose-500', 'animate-pulse');
+                    }
+                } else {
+                    const m = String(Math.floor(state.timerSeconds / 60)).padStart(2, '0');
+                    const s = String(state.timerSeconds % 60).padStart(2, '0');
+                    document.getElementById('timerText').textContent = `${m}:${s}`;
+                    document.getElementById('timerText').classList.remove('text-rose-500', 'animate-pulse');
+                }
             }, 1000);
         }
 
@@ -1356,6 +1443,16 @@
                     showScreen('setSelectionScreen');
                     showCustomAlert("Peperiksaan anda telah dijeda dan disimpan dengan selamat.");
                 }
+            );
+        }
+
+        function forceEndExam() {
+            showCustomConfirm(
+                "Tamat Peperiksaan Secara Paksa?",
+                "Adakah anda pasti mahu menamatkan peperiksaan ini sekarang? Anda TIDAK BOLEH menyambungnya semula. Laporan akan dijana serta-merta.",
+                "Batal", "Ya, Tamatkan",
+                null,
+                () => { endExamSession(true); }
             );
         }
 
@@ -1453,9 +1550,11 @@
                         () => { startExamLogic(setName, true, JSON.parse(savedExam)); }
                     );
                 } else {
+                    const maxMins = state.setDurations[setName];
+                    const durationText = maxMins ? `Masa anda adalah ${maxMins} minit. ` : "Masa anda akan direkodkan. ";
                     showCustomConfirm(
                         "Mula Peperiksaan?", 
-                        "Anda wajib membuka kamera, mikrofon, dan membenarkan akses GPS. Masa anda akan direkodkan. Setuju?", 
+                        `Anda wajib membuka kamera, mikrofon, dan membenarkan akses GPS. ${durationText}Setuju?`,
                         "Batal", "Mula", 
                         () => { state.currentSet = null; sessionStorage.removeItem('currentSet'); }, 
                         async () => { startExamLogic(setName, false); }
@@ -1752,7 +1851,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
         }
 
         // EXAM END & UPLOAD LOGIC
-        async function endExamSession() {
+        async function endExamSession(isForced = false) {
             stopTimerUI();
             showScreen('loadingScreen');
             document.getElementById('loadingText').textContent = "Sedang Menghantar Kertas Jawapan & Video... Jangan Tutup Tab Ini!";
@@ -1763,9 +1862,10 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             }
             stopCamera();
 
+            const currentSetData = state.questionSets.find(s => s.setName === state.currentSet);
+            let totalCount = currentSetData ? currentSetData.topics.length : state.examLog.length;
             let correctCount = state.examLog.filter(l => l.isCorrect).length;
-            let totalCount = state.examLog.length;
-            let percentage = Math.round((correctCount / totalCount) * 100);
+            let percentage = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
 
             let videoBase64 = "";
             if (state.recordedChunks.length > 0) {
@@ -1798,7 +1898,6 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 const data = await response.json();
                 if (!data.success) throw new Error(data.error);
                 
-                // Clear saved exam state upon successful submission
                 localStorage.removeItem(`exam_${state.playerName}_${state.currentSet}`);
                 showExamSlip(correctCount, totalCount, percentage, state.timerSeconds, state.examLog);
             } catch (err) {
@@ -1839,6 +1938,43 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             const modal = document.getElementById('examSlipModal');
             modal.classList.remove('hidden');
             setTimeout(() => document.getElementById('examSlipBox').classList.replace('scale-95', 'scale-100'), 10);
+        }
+
+        function downloadPDF() {
+            const slip = document.getElementById('examSlipBox');
+            const btns = document.getElementById('slipActionBtns');
+            const btnClose = document.getElementById('btnCloseSlip');
+            btns.classList.add('hidden');
+            btnClose.classList.add('hidden');
+            
+            slip.classList.remove('transform', 'scale-100');
+            
+            const opt = {
+              margin:       0.5,
+              filename:     `Laporan_Peperiksaan_${state.playerName}_${state.currentSet}.pdf`,
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2 },
+              jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            
+            html2pdf().set(opt).from(slip).save().then(() => {
+                btns.classList.remove('hidden');
+                btnClose.classList.remove('hidden');
+                slip.classList.add('transform', 'scale-100');
+            });
+        }
+
+        function shareResult() {
+            const percentage = document.getElementById('slipScore').textContent;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Laporan Peperiksaan Latih AI',
+                    text: `Saya baru sahaja menamatkan ujian ${state.currentSet} di Latih Tubi Pintar AI dengan markah ${percentage}! 🚀🎓`,
+                    url: window.location.href
+                }).catch(console.error);
+            } else {
+                showCustomAlert("Fungsi kongsi tidak disokong pada peranti ini.", true);
+            }
         }
 
         function closeExamSlip() {
