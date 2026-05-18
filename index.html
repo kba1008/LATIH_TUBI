@@ -116,6 +116,14 @@
 </head>
 <body class="bg-gradient-to-br from-indigo-100 via-fuchsia-50 to-cyan-100 min-h-screen text-slate-800 flex flex-col prevent-select">
 
+    <!-- Floating Draggable Camera (Exam Mode) -->
+    <div id="floatingCameraContainer" class="hidden fixed top-24 right-4 z-[60] cursor-grab touch-none pointer-events-auto rounded-xl shadow-2xl border-4 border-rose-500 overflow-hidden bg-black w-32 h-24 sm:w-40 sm:h-32 transition-transform hover:scale-[1.02]">
+        <div class="bg-rose-500 text-white text-[10px] sm:text-xs font-bold text-center py-1 pointer-events-none flex justify-center items-center gap-1">
+            <i data-lucide="video" class="w-3 h-3 sm:w-4 sm:h-4 animate-pulse"></i> Rakaman Aktif
+        </div>
+        <video id="floatingCameraPreview" autoplay muted playsinline class="w-full h-full object-cover pointer-events-none"></video>
+    </div>
+
     <!-- Pet Container -->
     <div id="petContainer" class="fixed bottom-4 left-2 md:left-8 z-40 flex flex-col items-center justify-end h-56 w-40 cursor-grab touch-none pointer-events-auto">
         <div id="petSpeech" class="absolute top-2 opacity-0 bg-white/95 backdrop-blur px-4 py-2 rounded-2xl rounded-bl-none text-lg font-black text-slate-700 shadow-xl border-2 border-indigo-100 transition-all duration-500 transform translate-y-4 z-20 whitespace-nowrap">
@@ -216,18 +224,22 @@
             <div id="quizScreen" class="hidden fade-in space-y-6">
                 
                 <!-- Status Bar Peperiksaan/Ulangkaji -->
-                <div id="quizStatusBar" class="hidden sticky top-[80px] z-40 bg-white/95 backdrop-blur-md p-4 md:p-5 rounded-[2rem] shadow-xl border-4 border-indigo-100 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 transition-all">
-                    <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
+                <div id="quizStatusBar" class="hidden sticky top-[80px] z-40 bg-white/95 backdrop-blur-md p-4 md:p-5 rounded-[2rem] shadow-xl border-4 border-indigo-100 mb-6 flex justify-between items-center transition-all">
+                    <div class="flex items-center gap-4">
                         <div class="bg-slate-800 text-white px-5 py-2.5 rounded-2xl font-mono text-xl md:text-2xl shadow-inner border-2 border-slate-600 flex items-center gap-3">
                             <i data-lucide="clock" class="w-6 h-6 text-amber-400 animate-pulse"></i>
                             <span id="timerText" class="font-black tracking-widest">00:00</span>
                         </div>
-                        <div class="text-right sm:text-left">
+                        <div class="text-left">
                             <p class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest" id="statusModeLabel">Mod</p>
                             <p id="questionProgressText" class="text-lg md:text-xl font-black text-indigo-600">Soalan - / -</p>
                         </div>
                     </div>
-                    <video id="webcamPreview" autoplay muted playsinline class="hidden w-full sm:w-40 h-28 sm:h-24 object-cover rounded-xl shadow-md border-4 border-rose-500 bg-black"></video>
+                    <div id="examPauseBtnContainer" class="hidden">
+                        <button onclick="pauseExam()" class="bg-amber-100 hover:bg-amber-200 text-amber-700 font-black py-2 px-4 rounded-xl transition shadow-md border border-amber-300 flex items-center gap-2">
+                            <i data-lucide="pause-circle" class="w-5 h-5"></i> <span class="hidden sm:inline">Jeda</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Pre-Note Area -->
@@ -409,7 +421,7 @@
                             <input type="radio" name="adminMode" value="peperiksaan" class="w-5 h-5 text-indigo-600 focus:ring-indigo-500">
                             <div>
                                 <p class="font-bold text-slate-800">Mod Peperiksaan</p>
-                                <p class="text-xs text-slate-500 font-medium">Wajib buka kamera & GPS. 1 cubaan sahaja. Anti-AI Diaktifkan.</p>
+                                <p class="text-xs text-slate-500 font-medium">Wajib buka kamera & GPS. Masa direkod. Anti-AI Diaktifkan.</p>
                             </div>
                         </label>
                     </div>
@@ -419,6 +431,11 @@
                     Simpan Tetapan
                 </button>
             </div>
+            
+            <hr class="border-slate-300/50 my-6">
+            
+            <h4 class="text-xl font-bold mb-4 text-slate-800 flex items-center gap-2"><i data-lucide="layers" class="w-6 h-6"></i> Pengurusan Set Soalan</h4>
+            <div id="adminSetList" class="space-y-2 max-h-52 overflow-y-auto mb-5 p-3 bg-white/60 rounded-2xl border-2 border-white custom-scrollbar"></div>
             
             <hr class="border-slate-300/50 my-6">
             
@@ -483,7 +500,7 @@
         }
 
         const AI_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbweKWqTjEmoKOOSXP0O5-x6dG8NL982LlTLvquFeh3rdkWlN5Oc4-lhGDvfRqV8vm14/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwtYQQ4Uk7MUwFuSSk8I3R04Zl22_YKF_ySWuKyPJar-m17yRH4IBlNluSouu_v_rv-zA/exec";
 
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
@@ -633,20 +650,7 @@
             });
         });
 
-        const PET_STAGES = [
-            { level: 0, emoji: '🥚', scale: 1.0 },
-            { level: 1, emoji: '🥚', scale: 1.05 },
-            { level: 2, emoji: '🥚', scale: 1.1 }
-        ];
-        for (let i = 3; i <= 32; i++) {
-            let emj = '🦆';
-            if (i === 3) emj = '🐣';
-            else if (i > 3 && i < 16) emj = '🐤';
-            PET_STAGES.push({ level: i, emoji: emj, scale: 1.0 + ((i - 3) * 0.05) });
-        }
-
-        const FOOD_TYPES = ['🍞', '🌽', '🥬', '🐛', '🌱', '🌾', '🐟', '🦐', '🥖', '🌿'];
-
+        // Drag functionality for Pet Container
         const petContainer = document.getElementById('petContainer');
         let isDragging = false;
         let currentX = 0, currentY = 0, initialX = 0, initialY = 0, xOffset = 0, yOffset = 0;
@@ -700,6 +704,70 @@
         document.addEventListener("touchend", dragEnd, false);
         document.addEventListener("touchmove", drag, { passive: false });
 
+        // Drag functionality for Floating Camera
+        const camContainer = document.getElementById('floatingCameraContainer');
+        let isCamDragging = false;
+        let camCurX = 0, camCurY = 0, camInitX = 0, camInitY = 0, camXOff = 0, camYOff = 0;
+
+        function camDragStart(e) {
+            if (e.type === "touchstart") {
+                camInitX = e.touches[0].clientX - camXOff;
+                camInitY = e.touches[0].clientY - camYOff;
+            } else {
+                camInitX = e.clientX - camXOff;
+                camInitY = e.clientY - camYOff;
+            }
+            if (e.target === camContainer || camContainer.contains(e.target)) {
+                isCamDragging = true;
+                camContainer.style.cursor = 'grabbing';
+            }
+        }
+
+        function camDragEnd() {
+            if (!isCamDragging) return;
+            camInitX = camCurX; 
+            camInitY = camCurY;
+            isCamDragging = false;
+            camContainer.style.cursor = 'grab';
+        }
+
+        function camDrag(e) {
+            if (isCamDragging) {
+                e.preventDefault();
+                if (e.type === "touchmove") {
+                    camCurX = e.touches[0].clientX - camInitX;
+                    camCurY = e.touches[0].clientY - camInitY;
+                } else {
+                    camCurX = e.clientX - camInitX;
+                    camCurY = e.clientY - camInitY;
+                }   
+                camXOff = camCurX; 
+                camYOff = camCurY;
+                setTranslate(camCurX, camCurY, camContainer);
+            }
+        }
+
+        camContainer.addEventListener("mousedown", camDragStart, false);
+        document.addEventListener("mouseup", camDragEnd, false);
+        document.addEventListener("mousemove", camDrag, { passive: false });
+        camContainer.addEventListener("touchstart", camDragStart, { passive: false });
+        document.addEventListener("touchend", camDragEnd, false);
+        document.addEventListener("touchmove", camDrag, { passive: false });
+
+        const PET_STAGES = [
+            { level: 0, emoji: '🥚', scale: 1.0 },
+            { level: 1, emoji: '🥚', scale: 1.05 },
+            { level: 2, emoji: '🥚', scale: 1.1 }
+        ];
+        for (let i = 3; i <= 32; i++) {
+            let emj = '🦆';
+            if (i === 3) emj = '🐣';
+            else if (i > 3 && i < 16) emj = '🐤';
+            PET_STAGES.push({ level: i, emoji: emj, scale: 1.0 + ((i - 3) * 0.05) });
+        }
+
+        const FOOD_TYPES = ['🍞', '🌽', '🥬', '🐛', '🌱', '🌾', '🐟', '🦐', '🥖', '🌿'];
+
         function toggleMobileChat() {
             const chatWrapper = document.getElementById('chatWrapper');
             if (chatWrapper.classList.contains('hidden')) {
@@ -717,14 +785,17 @@
 
         function updateModeIndicator() {
             const ind = document.getElementById('modeIndicator');
+            const pauseBtn = document.getElementById('examPauseBtnContainer');
             if(state.globalMode === 'peperiksaan') {
                 ind.textContent = 'Peperiksaan';
                 ind.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-700', 'border-emerald-200');
                 ind.classList.add('bg-rose-100', 'text-rose-700', 'border-rose-200');
+                pauseBtn.classList.remove('hidden');
             } else {
                 ind.textContent = 'Ulangkaji';
                 ind.classList.remove('hidden', 'bg-rose-100', 'text-rose-700', 'border-rose-200');
                 ind.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-200');
+                pauseBtn.classList.add('hidden');
             }
         }
 
@@ -873,6 +944,7 @@
                     document.getElementById('gasUrlInput').value = state.gasUrl;
                     document.querySelector(`input[name="adminMode"][value="${state.globalMode}"]`).checked = true;
                     document.getElementById('adminStudentList').classList.add('hidden');
+                    renderAdminSets();
                     document.getElementById('settingsModal').classList.remove('hidden');
                 } else if (pwd !== "") {
                     showCustomAlert("Kata laluan salah!", true);
@@ -935,6 +1007,35 @@
             });
         }
 
+        function renderAdminSets() {
+            const listDiv = document.getElementById('adminSetList');
+            listDiv.innerHTML = '';
+            if (state.questionSets.length === 0) {
+                listDiv.innerHTML = '<div class="text-center text-slate-500 font-bold">Tiada set soalan dijumpai.</div>';
+                return;
+            }
+            state.questionSets.forEach(set => {
+                const isActive = set.isActive !== false;
+                const btnColor = isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700';
+                const btnText = isActive ? 'Aktif' : 'Nyahaktif';
+                const icon = isActive ? 'check-circle' : 'x-circle';
+                
+                listDiv.innerHTML += `
+                    <div class="flex justify-between items-center p-3 border-b border-slate-200">
+                        <span class="font-bold text-base text-slate-800">${set.setName}</span>
+                        <button onclick="adminToggleSet('${set.setName}')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm transition hover:opacity-80 ${btnColor}">
+                            <i data-lucide="${icon}" class="w-4 h-4"></i> ${btnText}
+                        </button>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        function adminToggleSet(setName) {
+            showCustomConfirm("Ubah Status Set?", `Adakah anda pasti mahu mengubah status bagi set '${setName}'?`, "Batal", "Pasti", null, () => adminAction('toggle_set', setName));
+        }
+
         async function fetchAdminStudents() {
             const listDiv = document.getElementById('adminStudentList');
             listDiv.classList.remove('hidden');
@@ -984,8 +1085,18 @@
                 });
                 const data = await response.json();
                 if(!data.success) throw new Error(data.error);
-                showCustomAlert("Tindakan berjaya dilaksanakan!");
-                fetchAdminStudents();
+                
+                if (task === 'toggle_set') {
+                    const set = state.questionSets.find(s => s.setName === targetName);
+                    if (set) set.isActive = !set.isActive;
+                    sessionStorage.setItem('questionSets', JSON.stringify(state.questionSets));
+                    renderAdminSets();
+                    renderSetSelection();
+                    showCustomAlert(`Status set '${targetName}' berjaya dikemaskini!`);
+                } else if (task !== 'set_mode') {
+                    showCustomAlert("Tindakan berjaya dilaksanakan!");
+                    fetchAdminStudents();
+                }
             } catch(e) {
                 showCustomAlert("Ralat Admin: " + e.message, true);
             }
@@ -1012,7 +1123,12 @@
 
         function goToSetSelection() {
             if (state.timerInterval && state.globalMode === 'peperiksaan') {
-                showCustomAlert("Anda tidak dibenarkan keluar semasa peperiksaan sedang berjalan!", true);
+                showCustomConfirm(
+                    "Jeda Peperiksaan?", 
+                    "Masa peperiksaan sedang berjalan! Anda mahu keluar sementara? Masa dan jawapan anda akan disimpan dan boleh disambung kemudian.", 
+                    "Batal", "Jeda & Keluar", null, 
+                    () => pauseExam()
+                );
                 return;
             }
             stopTimerUI();
@@ -1151,16 +1267,35 @@
             const container = document.getElementById('setsContainer');
             container.innerHTML = '';
 
-            state.questionSets.forEach((set) => {
-                const totalTopics = set.topics.length;
-                const answeredCount = state.answeredTopics[set.setName] ? state.answeredTopics[set.setName].length : 0;
-                const isComplete = answeredCount >= totalTopics && totalTopics > 0 && state.globalMode !== 'peperiksaan';
-                
-                let progressColor = isComplete ? 'text-emerald-600 bg-emerald-100 border-emerald-200' : 'text-indigo-600 bg-indigo-100 border-indigo-200';
-                let icon = isComplete ? '<i data-lucide="check-circle" class="w-8 h-8 text-emerald-500"></i>' : '<i data-lucide="folder" class="w-8 h-8 text-indigo-500"></i>';
+            const activeSets = state.questionSets.filter(s => s.isActive !== false);
 
+            if (activeSets.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-slate-500 font-bold p-8">Tiada set soalan yang aktif pada masa ini.</div>';
+                return;
+            }
+
+            activeSets.forEach((set) => {
+                const totalTopics = set.topics.length;
+                let answeredCount = state.answeredTopics[set.setName] ? state.answeredTopics[set.setName].length : 0;
+                
+                let isComplete = answeredCount >= totalTopics && totalTopics > 0 && state.globalMode !== 'peperiksaan';
                 let statusText = `${answeredCount} / ${totalTopics} Selesai`;
-                if (state.globalMode === 'peperiksaan') statusText = `${totalTopics} Soalan Peperiksaan`;
+
+                // Check for paused exam
+                const savedExam = localStorage.getItem(`exam_${state.playerName}_${set.setName}`);
+                if (state.globalMode === 'peperiksaan') {
+                    if (savedExam) {
+                        statusText = "Terjeda (Boleh Disambung)";
+                        isComplete = false;
+                    } else {
+                        statusText = `${totalTopics} Soalan Peperiksaan`;
+                    }
+                }
+
+                let progressColor = isComplete ? 'text-emerald-600 bg-emerald-100 border-emerald-200' : 
+                                  (savedExam && state.globalMode === 'peperiksaan') ? 'text-amber-600 bg-amber-100 border-amber-200' : 'text-indigo-600 bg-indigo-100 border-indigo-200';
+                let icon = isComplete ? '<i data-lucide="check-circle" class="w-8 h-8 text-emerald-500"></i>' : 
+                           (savedExam && state.globalMode === 'peperiksaan') ? '<i data-lucide="pause-circle" class="w-8 h-8 text-amber-500"></i>' : '<i data-lucide="folder" class="w-8 h-8 text-indigo-500"></i>';
 
                 const btn = document.createElement('button');
                 btn.className = `glass-button p-6 rounded-3xl flex flex-col items-center justify-center text-center transition-all shadow-md hover:shadow-xl border-2 border-white/80 group transform hover:-translate-y-1 ${isComplete ? 'opacity-90' : ''}`;
@@ -1198,15 +1333,42 @@
             document.getElementById('quizStatusBar').classList.add('hidden');
         }
 
+        function pauseExam() {
+            showCustomConfirm(
+                "Jeda Peperiksaan?", 
+                "Kamera akan ditutup dan peperiksaan akan dijeda. Masa dan soalan anda yang telah dijawab akan disimpan. Anda boleh menyambungnya apabila anda berkelapangan.", 
+                "Batal", "Jeda & Keluar", null, 
+                () => {
+                    stopTimerUI();
+                    stopCamera();
+                    
+                    // Save State for Resume
+                    const examData = {
+                        log: state.examLog,
+                        answered: state.examAnsweredTopics,
+                        time: state.timerSeconds
+                    };
+                    localStorage.setItem(`exam_${state.playerName}_${state.currentSet}`, JSON.stringify(examData));
+                    
+                    state.currentSet = null;
+                    sessionStorage.removeItem('currentSet');
+                    renderSetSelection();
+                    showScreen('setSelectionScreen');
+                    showCustomAlert("Peperiksaan anda telah dijeda dan disimpan dengan selamat.");
+                }
+            );
+        }
+
         async function startCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 15 } },
                     audio: true
                 });
-                const videoEl = document.getElementById('webcamPreview');
+                
+                const videoEl = document.getElementById('floatingCameraPreview');
                 videoEl.srcObject = stream;
-                videoEl.classList.remove('hidden');
+                document.getElementById('floatingCameraContainer').classList.remove('hidden');
                 
                 document.getElementById('quizStatusBar').classList.replace('border-indigo-100', 'border-rose-300');
                 
@@ -1230,12 +1392,48 @@
             if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
                 state.mediaRecorder.stop();
             }
-            const videoEl = document.getElementById('webcamPreview');
+            const videoEl = document.getElementById('floatingCameraPreview');
             if (videoEl.srcObject) {
                 videoEl.srcObject.getTracks().forEach(track => track.stop());
             }
-            videoEl.classList.add('hidden');
+            document.getElementById('floatingCameraContainer').classList.add('hidden');
             document.getElementById('quizStatusBar').classList.replace('border-rose-300', 'border-indigo-100');
+        }
+
+        async function startExamLogic(setName, isResume, savedData = null) {
+            showScreen('loadingScreen');
+            document.getElementById('loadingText').textContent = "Mendapatkan Akses Kamera & GPS...";
+            
+            try {
+                state.gpsLocation = await new Promise((resolve) => {
+                    if (!navigator.geolocation) resolve("Tiada Sokongan GPS");
+                    navigator.geolocation.getCurrentPosition(
+                        pos => resolve(`${pos.coords.latitude}, ${pos.coords.longitude}`),
+                        err => resolve("Lokasi GPS Ditolak")
+                    );
+                });
+            } catch(e) { state.gpsLocation = "Ralat GPS"; }
+
+            const camStarted = await startCamera();
+            if (!camStarted) {
+                showCustomAlert("Peperiksaan DIBATALKAN. Kamera wajib dibuka untuk menduduki ujian ini.", true);
+                goToSetSelection();
+                return;
+            }
+
+            if (isResume && savedData) {
+                state.examLog = savedData.log;
+                state.examAnsweredTopics = savedData.answered;
+                state.timerSeconds = savedData.time;
+            } else {
+                state.examAnsweredTopics = [];
+                state.examLog = [];
+                state.timerSeconds = 0;
+                localStorage.removeItem(`exam_${state.playerName}_${setName}`);
+            }
+            
+            startTimerUI(isResume);
+            await generateNextQuestion();
         }
 
         async function startSetFlow(setName) {
@@ -1245,31 +1443,24 @@
             if(!setObj) return;
 
             if (state.globalMode === 'peperiksaan') {
-                showCustomConfirm("Mula Peperiksaan?", "Anda wajib membuka kamera, mikrofon, dan membenarkan akses GPS. Sistem Anti-Meniru akan diaktifkan. Anda hanya mempunyai 1 cubaan. Setuju?", "Batal", "Mula", null, async () => {
-                    showScreen('loadingScreen');
-                    document.getElementById('loadingText').textContent = "Mendapatkan Akses Kamera & GPS...";
-                    
-                    try {
-                        state.gpsLocation = await new Promise((resolve) => {
-                            if (!navigator.geolocation) resolve("Tiada Sokongan GPS");
-                            navigator.geolocation.getCurrentPosition(
-                                pos => resolve(`${pos.coords.latitude}, ${pos.coords.longitude}`),
-                                err => resolve("Lokasi GPS Ditolak")
-                            );
-                        });
-                    } catch(e) { state.gpsLocation = "Ralat GPS"; }
-
-                    const camStarted = await startCamera();
-                    if (!camStarted) {
-                        showCustomAlert("Peperiksaan DIBATALKAN. Kamera wajib dibuka untuk menduduki ujian ini.", true);
-                        goToSetSelection();
-                        return;
-                    }
-                    state.examAnsweredTopics = [];
-                    state.examLog = [];
-                    startTimerUI();
-                    await generateNextQuestion();
-                });
+                const savedExam = localStorage.getItem(`exam_${state.playerName}_${setName}`);
+                if (savedExam) {
+                    showCustomConfirm(
+                        "Sesi Tergendala Dikesan", 
+                        "Anda mempunyai sesi peperiksaan yang dijeda sebelum ini. Adakah anda mahu menyambungnya? (Perhatian: Rakaman video akan bermula baharu untuk sesi ini)", 
+                        "Mula Semula", "Sambung", 
+                        () => { startExamLogic(setName, false); }, 
+                        () => { startExamLogic(setName, true, JSON.parse(savedExam)); }
+                    );
+                } else {
+                    showCustomConfirm(
+                        "Mula Peperiksaan?", 
+                        "Anda wajib membuka kamera, mikrofon, dan membenarkan akses GPS. Masa anda akan direkodkan. Setuju?", 
+                        "Batal", "Mula", 
+                        () => { state.currentSet = null; sessionStorage.removeItem('currentSet'); }, 
+                        async () => { startExamLogic(setName, false); }
+                    );
+                }
             } else {
                 const answered = state.answeredTopics[setName] || [];
                 if (answered.length >= setObj.topics.length && setObj.topics.length > 0) {
@@ -1292,7 +1483,7 @@
             }
         }
 
-        async function generateNextQuestion(skipLogCheck = false) {
+        async function generateNextQuestion() {
             showScreen('loadingScreen');
             document.getElementById('loadingText').textContent = "Cikgu AI Sedang Berfikir...";
             
@@ -1607,6 +1798,8 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 const data = await response.json();
                 if (!data.success) throw new Error(data.error);
                 
+                // Clear saved exam state upon successful submission
+                localStorage.removeItem(`exam_${state.playerName}_${state.currentSet}`);
                 showExamSlip(correctCount, totalCount, percentage, state.timerSeconds, state.examLog);
             } catch (err) {
                 showCustomAlert("Ralat menghantar peperiksaan: " + err.message, true);
