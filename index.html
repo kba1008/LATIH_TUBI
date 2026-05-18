@@ -186,7 +186,7 @@
                     <i data-lucide="rocket" class="w-16 h-16 text-indigo-500"></i>
                 </div>
                 <h2 class="text-3xl md:text-5xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Bersedia untuk Belajar?</h2>
-                <p class="text-slate-600 mb-10 font-bold text-lg md:text-xl max-w-2xl mx-auto">Uji minda anda bersama Cikgu AI, kumpul mata, bela anak itik comel, dan jadi juara!</p>
+                <p class="text-slate-600 mb-10 font-bold text-lg md:text-xl max-w-2xl mx-auto">Uji minda anda bersama Cikgu AI, kumpul mata, bela haiwan comel, dan jadi juara!</p>
                 
                 <div class="max-w-2xl mx-auto space-y-6 w-full">
                     <div>
@@ -427,14 +427,41 @@
                             <input type="radio" name="adminMode" value="ulangkaji" class="w-5 h-5 text-indigo-600 focus:ring-indigo-500">
                             <div>
                                 <p class="font-bold text-slate-800">Mod Ulangkaji</p>
-                                <p class="text-xs text-slate-500 font-medium">Boleh cuba 2 kali. Mesti betul semua untuk tamat.</p>
+                                <p class="text-xs text-slate-500 font-medium">6 Pilihan. 1 Percubaan. AI bantu jika salah.</p>
                             </div>
                         </label>
                         <label class="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-xl border-2 border-slate-100 hover:border-indigo-300 transition">
                             <input type="radio" name="adminMode" value="peperiksaan" class="w-5 h-5 text-indigo-600 focus:ring-indigo-500">
                             <div>
                                 <p class="font-bold text-slate-800">Mod Peperiksaan</p>
-                                <p class="text-xs text-slate-500 font-medium">Wajib buka kamera & GPS. Masa direkod. Anti-AI Diaktifkan.</p>
+                                <p class="text-xs text-slate-500 font-medium">4 Pilihan. Kamera, GPS, Masa direkod.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-white/60 p-5 rounded-2xl border-2 border-white mt-4">
+                    <label class="block text-base font-bold mb-3 text-slate-800 flex items-center gap-2"><i data-lucide="bar-chart" class="w-5 h-5"></i> Tahap Kesukaran Soalan</label>
+                    <div class="flex flex-col gap-3">
+                        <label class="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-xl border-2 border-slate-100 hover:border-indigo-300 transition">
+                            <input type="radio" name="adminDifficulty" value="mudah" class="w-5 h-5 text-indigo-600 focus:ring-indigo-500">
+                            <div>
+                                <p class="font-bold text-slate-800">Mudah</p>
+                                <p class="text-xs text-slate-500 font-medium">Fakta langsung dan jawapan ketara.</p>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-xl border-2 border-slate-100 hover:border-indigo-300 transition">
+                            <input type="radio" name="adminDifficulty" value="sederhana" class="w-5 h-5 text-indigo-600 focus:ring-indigo-500">
+                            <div>
+                                <p class="font-bold text-slate-800">Sederhana</p>
+                                <p class="text-xs text-slate-500 font-medium">Memerlukan pemahaman dan aplikasi.</p>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-xl border-2 border-slate-100 hover:border-indigo-300 transition">
+                            <input type="radio" name="adminDifficulty" value="susah" class="w-5 h-5 text-indigo-600 focus:ring-indigo-500">
+                            <div>
+                                <p class="font-bold text-slate-800">Susah (KBAT)</p>
+                                <p class="text-xs text-slate-500 font-medium">Analisis mendalam dan pemikiran kritis.</p>
                             </div>
                         </label>
                     </div>
@@ -513,7 +540,7 @@
         }
 
         const AI_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbysSlfdw5DU4OZiCjBPN-nWCutGh-WiERV-1Xc7WHVC0HNGhi94BQm2fyjWbce-XPbQWQ/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwtYQQ4Uk7MUwFuSSk8I3R04Zl22_YKF_ySWuKyPJar-m17yRH4IBlNluSouu_v_rv-zA/exec";
 
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
@@ -568,9 +595,10 @@
         let state = {
             gasUrl: localStorage.getItem('gasUrl') || DEFAULT_GAS_URL,
             globalMode: 'ulangkaji', 
+            globalDifficulty: 'sederhana',
             apiKey: '',
             questionSets: [], 
-            setDurations: {}, // Data masa dari GAS
+            setDurations: {}, 
             answeredTopics: savedTopics, 
             currentSet: sessionStorage.getItem('currentSet') || null,
             currentTopic: sessionStorage.getItem('currentTopic') || '',
@@ -579,8 +607,6 @@
             playerName: localStorage.getItem('playerName') || '',
             points: parseInt(localStorage.getItem('points')) || 0,
             petLevel: parseInt(localStorage.getItem('petLevel')) || 0,
-            attempts: 0,
-            currentTopicAttempts: 0,
             examLog: [],
             examAnsweredTopics: [],
             timerSeconds: 0,
@@ -595,6 +621,7 @@
             try { state.questionSets = JSON.parse(sessionStorage.getItem('questionSets') || '[]'); } catch(e) { state.questionSets = []; }
             try { state.setDurations = JSON.parse(sessionStorage.getItem('setDurations') || '{}'); } catch(e) { state.setDurations = {}; }
             state.globalMode = sessionStorage.getItem('globalMode') || 'ulangkaji';
+            state.globalDifficulty = sessionStorage.getItem('globalDifficulty') || 'sederhana';
             updateModeIndicator();
 
             if (state.playerName && state.apiKey && state.currentSet && state.currentQuiz) {
@@ -801,16 +828,19 @@
         function updateModeIndicator() {
             const ind = document.getElementById('modeIndicator');
             const pauseBtn = document.getElementById('examPauseBtnContainer');
+            const petCont = document.getElementById('petContainer');
             if(state.globalMode === 'peperiksaan') {
                 ind.textContent = 'Peperiksaan';
                 ind.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-700', 'border-emerald-200');
                 ind.classList.add('bg-rose-100', 'text-rose-700', 'border-rose-200');
                 pauseBtn.classList.remove('hidden');
+                petCont.classList.add('hidden');
             } else {
                 ind.textContent = 'Ulangkaji';
                 ind.classList.remove('hidden', 'bg-rose-100', 'text-rose-700', 'border-rose-200');
                 ind.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-200');
                 pauseBtn.classList.add('hidden');
+                petCont.classList.remove('hidden');
             }
         }
 
@@ -958,6 +988,7 @@
                 if (pwd === "101010") {
                     document.getElementById('gasUrlInput').value = state.gasUrl;
                     document.querySelector(`input[name="adminMode"][value="${state.globalMode}"]`).checked = true;
+                    document.querySelector(`input[name="adminDifficulty"][value="${state.globalDifficulty}"]`).checked = true;
                     document.getElementById('adminStudentList').classList.add('hidden');
                     renderAdminSets();
                     document.getElementById('settingsModal').classList.remove('hidden');
@@ -975,18 +1006,21 @@
             state.gasUrl = document.getElementById('gasUrlInput').value.trim();
             localStorage.setItem('gasUrl', state.gasUrl);
             const selectedMode = document.querySelector('input[name="adminMode"]:checked').value;
+            const selectedDiff = document.querySelector('input[name="adminDifficulty"]:checked').value;
             
             try {
                 const response = await fetch(state.gasUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'admin_action', adminPwd: '101010', task: 'set_mode', mode: selectedMode })
+                    body: JSON.stringify({ action: 'admin_action', adminPwd: '101010', task: 'set_settings', mode: selectedMode, difficulty: selectedDiff })
                 });
                 const data = await response.json();
                 if(!data.success) throw new Error(data.error);
                 
                 state.globalMode = selectedMode;
+                state.globalDifficulty = selectedDiff;
                 sessionStorage.setItem('globalMode', state.globalMode);
+                sessionStorage.setItem('globalDifficulty', state.globalDifficulty);
                 updateModeIndicator();
                 showCustomAlert("Tetapan berjaya disimpan ke pelayan!");
                 closeSettings();
@@ -1146,7 +1180,7 @@
                 const data = await response.json();
                 if(!data.success) throw new Error(data.error);
                 
-                if (task !== 'set_mode') {
+                if (task !== 'set_settings') {
                     showCustomAlert("Tindakan berjaya dilaksanakan!");
                     fetchAdminStudents();
                 }
@@ -1299,6 +1333,10 @@
                     sessionStorage.setItem('globalMode', state.globalMode);
                     updateModeIndicator();
                 }
+                if(data.globalDifficulty) {
+                    state.globalDifficulty = data.globalDifficulty;
+                    sessionStorage.setItem('globalDifficulty', state.globalDifficulty);
+                }
 
                 if(data.userPoints !== undefined) {
                     state.points = data.userPoints;
@@ -1356,7 +1394,7 @@
 
                 let progressColor = isComplete ? 'text-emerald-600 bg-emerald-100 border-emerald-200' : 
                                   (savedExam && state.globalMode === 'peperiksaan') ? 'text-amber-600 bg-amber-100 border-amber-200' : 'text-indigo-600 bg-indigo-100 border-indigo-200';
-                let icon = isComplete ? '<i data-lucide="check-circle" class="w-8 h-8 text-emerald-500"></i>' : 
+                let icon = isComplete ? '<i data-lucide="check-circle" class="w-8 h-8 text-emerald-50"></i>' : 
                            (savedExam && state.globalMode === 'peperiksaan') ? '<i data-lucide="pause-circle" class="w-8 h-8 text-amber-500"></i>' : '<i data-lucide="folder" class="w-8 h-8 text-indigo-500"></i>';
 
                 const btn = document.createElement('button');
@@ -1592,8 +1630,7 @@
             document.getElementById('feedbackArea').classList.add('hidden');
             document.getElementById('inlineRobotHint').classList.add('hidden');
             
-            state.attempts = 0;
-            state.currentTopicAttempts = 0;
+            state.isProcessing = false;
             
             const currentSetData = state.questionSets.find(s => s.setName === state.currentSet);
             if(!currentSetData) {
@@ -1623,23 +1660,30 @@
                 return;
             }
 
-            state.currentTopic = availableTopics[0];
+            let randomIndex = Math.floor(Math.random() * availableTopics.length);
+            state.currentTopic = availableTopics[randomIndex];
             sessionStorage.setItem('currentTopic', state.currentTopic);
+
+            let numOptions = state.globalMode === 'peperiksaan' ? 4 : 6;
+            let diffStr = "";
+            if (state.globalDifficulty === 'mudah') diffStr = "Tahap kesukaran: MUDAH (Soalan fakta langsung).";
+            else if (state.globalDifficulty === 'sederhana') diffStr = "Tahap kesukaran: SEDERHANA (Perlu pemahaman/aplikasi).";
+            else diffStr = "Tahap kesukaran: SUSAH/KBAT (Soalan memerlukan analisis pemikiran aras tinggi).";
             
             const prompt = `Berdasarkan topik berikut: "${state.currentTopic}", hasilkan:
 1. 1 Nota ulangkaji ringkas yang SANGAT MENARIK. Fokus HANYA pada isi-isi dan fakta penting sahaja (point form). Jangan meleret. Gunakan gaya bahasa seorang guru pakar yang mesra kanak-kanak. Fakta wajib tepat.
 2. WAJIB gunakan simbol sempang (-) sebagai penanda peluru (bullet points). DILARANG SAMA SEKALI menggunakan simbol bintang (*).
 3. WAJIB kenal pasti beberapa kata kunci paling kritikal dan letakkannya di dalam kurungan bintang berganda (contoh: **kata kunci penting**).
-4. 1 Soalan objektif berdasarkan nota tersebut yang logik dan tidak mengelirukan.
-5. 4 pilihan jawapan (A, B, C, D). Pastikan pilihan jawapan yang betul adalah tepat.
-6. Indeks jawapan yang betul (0 untuk A, 1 untuk B, 2 untuk C, 3 untuk D).
+4. 1 Soalan objektif berdasarkan nota tersebut yang logik dan tidak mengelirukan. ${diffStr}
+5. ${numOptions} pilihan jawapan. Pastikan hanya 1 pilihan jawapan yang betul, dan yang lain adalah salah.
+6. Indeks jawapan yang betul (Bermula dari 0 hingga ${numOptions - 1}).
 7. WAJIB mematuhi tatabahasa Bahasa Melayu standard mengikut Kamus Dewan dan Pustaka.
 
 Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah, tanpa sebarang teks tambahan:
 {
   "nota": "Teks nota ringkas, berpoin (-) & mempunyai **kata kunci highlight** di sini...",
   "soalan": "Teks soalan di sini...",
-  "pilihan": ["Pilihan 1", "Pilihan 2", "Pilihan 3", "Pilihan 4"],
+  "pilihan": ["Pilihan 1", "Pilihan 2", "Pilihan 3", "Pilihan 4"${numOptions === 6 ? ', "Pilihan 5", "Pilihan 6"' : ''}],
   "jawapan_betul": 0
 }`;
 
@@ -1693,11 +1737,11 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             
             const container = document.getElementById('optionsContainer');
             container.innerHTML = '';
-            
+            const letters = ['A','B','C','D','E','F'];
             state.currentQuiz.pilihan.forEach((opt, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'w-full h-full text-left p-4 md:p-6 rounded-3xl glass-button font-extrabold text-lg md:text-xl option-btn flex items-center gap-4 transition-all duration-300 shadow-md hover:shadow-2xl border-2 border-white/80';
-                btn.innerHTML = `<span class="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center rounded-2xl bg-white text-indigo-600 font-black shadow-md border-4 border-indigo-50 text-xl md:text-3xl">${['A','B','C','D'][index]}</span> <span class="leading-relaxed text-slate-700 font-bold ml-2">${opt}</span>`;
+                btn.innerHTML = `<span class="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center rounded-2xl bg-white text-indigo-600 font-black shadow-md border-4 border-indigo-50 text-xl md:text-3xl">${letters[index]}</span> <span class="leading-relaxed text-slate-700 font-bold ml-2">${opt}</span>`;
                 btn.onclick = () => handleAnswer(index, btn);
                 container.appendChild(btn);
             });
@@ -1730,10 +1774,11 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             lucide.createIcons();
         }
 
-        async function generateClue(wrongIndex) {
+        async function generateCorrection(wrongIndex) {
             const question = state.currentQuiz.soalan;
             const wrongAnswer = state.currentQuiz.pilihan[wrongIndex];
-            const prompt = `Soalan: ${question}\nJawapan Murid (Salah): ${wrongAnswer}\n\nBerikan SATU klu (bayangan) ringkas untuk bantu murid cari jawapan sebenar. JANGAN beri jawapan secara terus. Gaya bahasa mesra kanak-kanak. WAJIB mematuhi tatabahasa Bahasa Melayu standard mengikut Kamus Dewan dan Pustaka. Maksimum 2 ayat.`;
+            const correctAnswer = state.currentQuiz.pilihan[state.currentQuiz.jawapan_betul];
+            const prompt = `Soalan: ${question}\nJawapan Salah: ${wrongAnswer}\nJawapan Betul: ${correctAnswer}\n\nMurid telah menjawab salah. Terangkan secara ringkas kenapa jawapan betul itu tepat, dan kenapa jawapan murid kurang tepat. Gaya bahasa mesra kanak-kanak, berikan dorongan. Maksimum 3 ayat.`;
             try {
                 const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
@@ -1741,9 +1786,9 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                     body: JSON.stringify({ model: AI_MODEL, messages: [{ role: "user", content: prompt }], temperature: 0.6, max_tokens: 256 })
                 });
                 const data = await response.json();
-                document.getElementById('inlineRobotText').innerHTML = `<span class="text-amber-600 font-black mb-1 block"><i data-lucide="lightbulb" class="w-5 h-5 inline"></i> Petunjuk:</span>${parseMarkdown(data.choices[0].message.content)}`;
+                document.getElementById('inlineRobotText').innerHTML = `<span class="text-rose-600 font-black mb-1 block"><i data-lucide="alert-circle" class="w-5 h-5 inline"></i> Penerangan:</span>${parseMarkdown(data.choices[0].message.content)}`;
             } catch (error) {
-                document.getElementById('inlineRobotText').innerHTML = `<span class="text-amber-600 font-black mb-1 block"><i data-lucide="lightbulb" class="w-5 h-5 inline"></i> Petunjuk:</span>Mari baca nota semula dengan teliti! 💪`;
+                document.getElementById('inlineRobotText').innerHTML = `<span class="text-rose-600 font-black mb-1 block"><i data-lucide="alert-circle" class="w-5 h-5 inline"></i> Penerangan:</span>Sila baca semula nota yang diberikan dan cuba fahami ya! 💪`;
             }
             lucide.createIcons();
         }
@@ -1806,11 +1851,11 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                 btnElement.style.borderColor = '#4ade80';
                 btnElement.classList.add('shadow-2xl', 'transform', 'scale-[1.03]');
                 
-                let earnedPoints = state.currentTopicAttempts === 0 ? 10 : 5;
+                let earnedPoints = 10;
                 state.points += earnedPoints;
                 localStorage.setItem('points', state.points);
                 updateHeaderUI();
-                if (state.currentTopicAttempts === 0) feedPet(FOOD_TYPES[Math.floor(Math.random() * FOOD_TYPES.length)]);
+                feedPet(FOOD_TYPES[Math.floor(Math.random() * FOOD_TYPES.length)]);
                 saveScoreToGAS();
 
                 inlineRobotHint.classList.remove('hidden');
@@ -1828,25 +1873,34 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
 
             } else {
                 playWrongSound();
-                state.currentTopicAttempts++;
                 
+                // Highlight correct answer immediately
+                const optionsContainers = document.getElementById('optionsContainer').children;
+                const correctBtn = optionsContainers[state.currentQuiz.jawapan_betul];
+                correctBtn.style.background = 'rgba(187, 247, 208, 0.95)';
+                correctBtn.style.borderColor = '#4ade80';
+                correctBtn.classList.add('shadow-2xl');
+
                 btnElement.style.background = 'rgba(254, 202, 202, 0.8)';
                 btnElement.style.borderColor = '#f87171';
                 btnElement.classList.add('opacity-60', 'animate-shake');
                 setTimeout(() => btnElement.classList.remove('animate-shake'), 400);
-                btnElement.disabled = true;
+                
+                document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
                 punishPet();
 
-                if (state.currentTopicAttempts >= 2) {
-                    showCustomAlert(`Percubaan tamat. Jawapan yang betul adalah: ${['A','B','C','D'][state.currentQuiz.jawapan_betul]} - ${correctAnswerText}. Soalan ini akan diulang semula di akhir set nanti.`, true);
-                    state.isProcessing = false;
-                    generateNextQuestion(); 
-                } else {
-                    inlineRobotHint.classList.remove('hidden');
-                    inlineRobotText.innerHTML = '<span class="animate-pulse text-indigo-600">Cikgu AI sedang mencari petunjuk... 🧐</span>';
-                    await generateClue(selectedIndex);
-                    state.isProcessing = false;
-                }
+                inlineRobotHint.classList.remove('hidden');
+                inlineRobotText.innerHTML = '<span class="animate-pulse text-indigo-600">Cikgu AI sedang menyediakan penjelasan jawapan... 🧐</span>';
+                await generateCorrection(selectedIndex);
+
+                const feedbackArea = document.getElementById('feedbackArea');
+                feedbackArea.classList.remove('hidden', 'border-emerald-400', 'bg-emerald-50/95');
+                feedbackArea.classList.add('border-rose-300', 'bg-rose-50/95');
+                document.getElementById('feedbackHeader').innerHTML = `<div class="p-2 bg-rose-200 rounded-full"><i data-lucide="x-circle" class="w-8 h-8 text-rose-700"></i></div> <span class="text-rose-800">Jawapan Kurang Tepat!</span>`;
+                document.getElementById('feedbackText').textContent = `Soalan ini akan ditanya semula secara rawak nanti. Teruskan ulangkaji.`;
+                setTimeout(() => { feedbackArea.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, 100);
+                lucide.createIcons();
+                state.isProcessing = false;
             }
         }
 
