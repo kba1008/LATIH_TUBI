@@ -105,16 +105,16 @@
         ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.4); border-radius: 8px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.8); }
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+
+        /* Anti-Copy System */
+        .prevent-select {
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-indigo-100 via-fuchsia-50 to-cyan-100 min-h-screen text-slate-800 flex flex-col">
-
-    <!-- Timer & Camera UI -->
-    <div id="timerContainer" class="hidden fixed top-24 right-4 md:right-8 z-40 bg-slate-800/90 backdrop-blur text-white px-5 py-2.5 rounded-full font-mono text-xl md:text-2xl shadow-xl border-2 border-slate-600 flex items-center gap-3">
-        <i data-lucide="clock" class="w-6 h-6 text-amber-400 animate-pulse"></i>
-        <span id="timerText" class="font-black tracking-widest">00:00</span>
-    </div>
-    <video id="webcamPreview" autoplay muted playsinline class="hidden fixed bottom-24 right-4 md:right-8 w-32 h-24 md:w-48 md:h-36 object-cover rounded-2xl shadow-2xl border-4 border-indigo-500 z-40 bg-black"></video>
+<body class="bg-gradient-to-br from-indigo-100 via-fuchsia-50 to-cyan-100 min-h-screen text-slate-800 flex flex-col prevent-select">
 
     <!-- Pet Container -->
     <div id="petContainer" class="fixed bottom-4 left-2 md:left-8 z-40 flex flex-col items-center justify-end h-56 w-40 cursor-grab touch-none pointer-events-auto">
@@ -136,7 +136,7 @@
     </button>
 
     <!-- Header -->
-    <header class="glass-header p-4 sticky top-0 z-30">
+    <header class="glass-header p-4 sticky top-0 z-50">
         <div class="w-full max-w-[1400px] px-4 md:px-6 mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <div class="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl shadow-inner border border-indigo-300 animate-float">
@@ -215,6 +215,21 @@
             <!-- Quiz Screen -->
             <div id="quizScreen" class="hidden fade-in space-y-6">
                 
+                <!-- Status Bar Peperiksaan/Ulangkaji -->
+                <div id="quizStatusBar" class="hidden sticky top-[80px] z-40 bg-white/95 backdrop-blur-md p-4 md:p-5 rounded-[2rem] shadow-xl border-4 border-indigo-100 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 transition-all">
+                    <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
+                        <div class="bg-slate-800 text-white px-5 py-2.5 rounded-2xl font-mono text-xl md:text-2xl shadow-inner border-2 border-slate-600 flex items-center gap-3">
+                            <i data-lucide="clock" class="w-6 h-6 text-amber-400 animate-pulse"></i>
+                            <span id="timerText" class="font-black tracking-widest">00:00</span>
+                        </div>
+                        <div class="text-right sm:text-left">
+                            <p class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest" id="statusModeLabel">Mod</p>
+                            <p id="questionProgressText" class="text-lg md:text-xl font-black text-indigo-600">Soalan - / -</p>
+                        </div>
+                    </div>
+                    <video id="webcamPreview" autoplay muted playsinline class="hidden w-full sm:w-40 h-28 sm:h-24 object-cover rounded-xl shadow-md border-4 border-rose-500 bg-black"></video>
+                </div>
+
                 <!-- Pre-Note Area -->
                 <div id="preNoteArea" class="glass-panel p-6 md:p-10 lg:p-12 rounded-[2.5rem] shadow-2xl mb-6">
                     <div class="flex items-center justify-between mb-6">
@@ -394,7 +409,7 @@
                             <input type="radio" name="adminMode" value="peperiksaan" class="w-5 h-5 text-indigo-600 focus:ring-indigo-500">
                             <div>
                                 <p class="font-bold text-slate-800">Mod Peperiksaan</p>
-                                <p class="text-xs text-slate-500 font-medium">Wajib buka kamera. 1 cubaan sahaja. Merekod video.</p>
+                                <p class="text-xs text-slate-500 font-medium">Wajib buka kamera & GPS. 1 cubaan sahaja. Anti-AI Diaktifkan.</p>
                             </div>
                         </label>
                     </div>
@@ -468,7 +483,7 @@
         }
 
         const AI_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxgHNSpPUykhhWg8nXbBqvpPTMP-O4f5ciWvn7R6IJkNNcgOTmoxKqveuqh6VXmdPS8Tg/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwtYQQ4Uk7MUwFuSSk8I3R04Zl22_YKF_ySWuKyPJar-m17yRH4IBlNluSouu_v_rv-zA/exec";
 
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
@@ -522,7 +537,7 @@
 
         let state = {
             gasUrl: localStorage.getItem('gasUrl') || DEFAULT_GAS_URL,
-            globalMode: 'ulangkaji', // 'ulangkaji' or 'peperiksaan'
+            globalMode: 'ulangkaji', 
             apiKey: '',
             questionSets: [], 
             answeredTopics: savedTopics, 
@@ -535,13 +550,13 @@
             petLevel: parseInt(localStorage.getItem('petLevel')) || 0,
             attempts: 0,
             currentTopicAttempts: 0,
-            // Exam states
             examLog: [],
             examAnsweredTopics: [],
             timerSeconds: 0,
             timerInterval: null,
             mediaRecorder: null,
-            recordedChunks: []
+            recordedChunks: [],
+            gpsLocation: null
         };
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -557,7 +572,6 @@
                 document.getElementById('btnSetSelection').classList.remove('hidden');
                 showScreen('quizScreen');
                 appendChat('bot', `Selamat kembali, ${state.playerName}! Sesi anda telah dipulihkan.`);
-                // Resume timer visually if needed, though strictly it restarts on reload to avoid cheating complexities
                 startTimerUI(true);
             } else if (state.playerName && state.apiKey && state.questionSets.length > 0) {
                 updateHeaderUI();
@@ -571,6 +585,52 @@
             } else {
                 showScreen('welcomeScreen');
             }
+            
+            // Anti-Cheating System Event Listeners
+            document.addEventListener('contextmenu', e => {
+                if (state.globalMode === 'peperiksaan' && state.currentSet) {
+                    e.preventDefault();
+                    showCustomAlert("Amaran Integriti: Klik kanan tidak dibenarkan semasa peperiksaan berjalan!", true);
+                }
+            });
+            document.addEventListener('copy', e => {
+                if (state.globalMode === 'peperiksaan' && state.currentSet) {
+                    e.preventDefault();
+                    e.clipboardData.setData('text/plain', '');
+                    showCustomAlert("Amaran Integriti: Aktiviti menyalin (Copy) dikesan dan disekat!", true);
+                }
+            });
+            document.addEventListener('paste', e => {
+                if (state.globalMode === 'peperiksaan' && state.currentSet) {
+                    e.preventDefault();
+                    showCustomAlert("Amaran Integriti: Aktiviti menampal (Paste) dari sumber AI dikesan dan disekat!", true);
+                }
+            });
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && state.globalMode === 'peperiksaan' && state.currentSet && state.timerInterval) {
+                    state.examLog.push({
+                        topic: "PELANGGARAN INTEGRITI",
+                        question: "AMARAN: Pelajar didapati meninggalkan tab peperiksaan atau membuka aplikasi lain.",
+                        userAnswer: "MENCURIGAKAN",
+                        correctAnswer: "TIDAK DIBENARKAN",
+                        isCorrect: false
+                    });
+                    showCustomAlert("AMARAN: Anda dikesan meninggalkan tab/aplikasi peperiksaan. Tindakan ini telah direkodkan dalam laporan peperiksaan anda!", true);
+                }
+            });
+            window.addEventListener('keydown', e => {
+                if (state.globalMode === 'peperiksaan' && state.currentSet) {
+                    if (e.key === 'F12' || 
+                       (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                       (e.ctrlKey && e.key === 'c') || 
+                       (e.ctrlKey && e.key === 'v') || 
+                       (e.metaKey && e.key === 'c') || 
+                       (e.metaKey && e.key === 'v')) {
+                        e.preventDefault();
+                        showCustomAlert("Amaran Integriti: Pintasan papan kekunci ini tidak dibenarkan!", true);
+                    }
+                }
+            });
         });
 
         const PET_STAGES = [
@@ -749,7 +809,7 @@
             if (isError) {
                 iconDiv.className = 'mx-auto mb-5 w-16 h-16 flex items-center justify-center rounded-full bg-red-100 text-red-500 shadow-inner border-4 border-white';
                 iconDiv.innerHTML = '<i data-lucide="alert-triangle" class="w-8 h-8"></i>';
-                document.getElementById('customAlertTitle').textContent = 'Ralat';
+                document.getElementById('customAlertTitle').textContent = 'Ralat / Amaran';
             } else {
                 iconDiv.className = 'mx-auto mb-5 w-16 h-16 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 shadow-inner border-4 border-white';
                 iconDiv.innerHTML = '<i data-lucide="info" class="w-8 h-8"></i>';
@@ -832,6 +892,7 @@
             try {
                 const response = await fetch(state.gasUrl, {
                     method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'admin_action', adminPwd: '101010', task: 'set_mode', mode: selectedMode })
                 });
                 const data = await response.json();
@@ -882,6 +943,7 @@
             try {
                 const response = await fetch(state.gasUrl, {
                     method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'get_all_students', adminPwd: '101010' })
                 });
                 const data = await response.json();
@@ -917,6 +979,7 @@
             try {
                 const response = await fetch(state.gasUrl, {
                     method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'admin_action', adminPwd: '101010', task, targetName })
                 });
                 const data = await response.json();
@@ -975,6 +1038,7 @@
             try {
                 const response = await fetch(state.gasUrl, {
                     method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'get_leaderboard' })
                 });
                 const data = await response.json();
@@ -1120,7 +1184,7 @@
         function startTimerUI(isResume = false) {
             if(!isResume) state.timerSeconds = 0;
             clearInterval(state.timerInterval);
-            document.getElementById('timerContainer').classList.remove('hidden');
+            document.getElementById('quizStatusBar').classList.remove('hidden');
             state.timerInterval = setInterval(() => {
                 state.timerSeconds++;
                 const m = String(Math.floor(state.timerSeconds / 60)).padStart(2, '0');
@@ -1131,7 +1195,7 @@
 
         function stopTimerUI() {
             clearInterval(state.timerInterval);
-            document.getElementById('timerContainer').classList.add('hidden');
+            document.getElementById('quizStatusBar').classList.add('hidden');
         }
 
         async function startCamera() {
@@ -1144,11 +1208,13 @@
                 videoEl.srcObject = stream;
                 videoEl.classList.remove('hidden');
                 
+                document.getElementById('quizStatusBar').classList.replace('border-indigo-100', 'border-rose-300');
+                
                 state.recordedChunks = [];
                 try {
                     state.mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 250000 });
                 } catch (e) {
-                    state.mediaRecorder = new MediaRecorder(stream); // fallback
+                    state.mediaRecorder = new MediaRecorder(stream); 
                 }
                 
                 state.mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) state.recordedChunks.push(e.data); };
@@ -1169,6 +1235,7 @@
                 videoEl.srcObject.getTracks().forEach(track => track.stop());
             }
             videoEl.classList.add('hidden');
+            document.getElementById('quizStatusBar').classList.replace('border-rose-300', 'border-indigo-100');
         }
 
         async function startSetFlow(setName) {
@@ -1178,9 +1245,20 @@
             if(!setObj) return;
 
             if (state.globalMode === 'peperiksaan') {
-                showCustomConfirm("Mula Peperiksaan?", "Anda wajib membuka kamera dan mikrofon. Hanya 1 cubaan untuk setiap soalan dibenarkan. Setuju?", "Batal", "Mula", null, async () => {
+                showCustomConfirm("Mula Peperiksaan?", "Anda wajib membuka kamera, mikrofon, dan membenarkan akses GPS. Sistem Anti-Meniru akan diaktifkan. Anda hanya mempunyai 1 cubaan. Setuju?", "Batal", "Mula", null, async () => {
                     showScreen('loadingScreen');
-                    document.getElementById('loadingText').textContent = "Memulakan Kamera...";
+                    document.getElementById('loadingText').textContent = "Mendapatkan Akses Kamera & GPS...";
+                    
+                    try {
+                        state.gpsLocation = await new Promise((resolve) => {
+                            if (!navigator.geolocation) resolve("Tiada Sokongan GPS");
+                            navigator.geolocation.getCurrentPosition(
+                                pos => resolve(`${pos.coords.latitude}, ${pos.coords.longitude}`),
+                                err => resolve("Lokasi GPS Ditolak")
+                            );
+                        });
+                    } catch(e) { state.gpsLocation = "Ralat GPS"; }
+
                     const camStarted = await startCamera();
                     if (!camStarted) {
                         showCustomAlert("Peperiksaan DIBATALKAN. Kamera wajib dibuka untuk menduduki ujian ini.", true);
@@ -1236,6 +1314,12 @@
 
             let answeredInSet = state.globalMode === 'peperiksaan' ? state.examAnsweredTopics : (state.answeredTopics[state.currentSet] || []);
             let availableTopics = currentSetData.topics.filter(t => !answeredInSet.includes(t));
+
+            // Update Progress UI
+            const totalQ = currentSetData.topics.length;
+            let currentQ = Math.min(answeredInSet.length + 1, totalQ);
+            document.getElementById('questionProgressText').textContent = `Soalan ${currentQ} / ${totalQ}`;
+            document.getElementById('statusModeLabel').textContent = state.globalMode === 'peperiksaan' ? 'Peperiksaan Sedang Berjalan' : 'Ulangkaji Santai';
 
             if(availableTopics.length === 0) {
                 if (state.globalMode === 'peperiksaan') {
@@ -1305,7 +1389,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             } catch (error) {
                 console.error("Ralat Penjanaan Soalan:", error);
                 showCustomAlert("Ada ralat sambungan ke AI. Cuba lagi...", true);
-                if(state.globalMode === 'peperiksaan') goToSetSelection(); // Failsafe for exam to prevent hang
+                if(state.globalMode === 'peperiksaan') goToSetSelection(); 
             }
         }
 
@@ -1465,7 +1549,6 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
 
                 if (state.currentTopicAttempts >= 2) {
                     showCustomAlert(`Percubaan tamat. Jawapan yang betul adalah: ${['A','B','C','D'][state.currentQuiz.jawapan_betul]} - ${correctAnswerText}. Soalan ini akan diulang semula di akhir set nanti.`, true);
-                    // Do NOT add to answeredTopics, so it naturally loops back.
                     state.isProcessing = false;
                     generateNextQuestion(); 
                 } else {
@@ -1485,7 +1568,6 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             
             if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
                 state.mediaRecorder.stop();
-                // Wait for ondataavailable to finish pushing
                 await new Promise(r => setTimeout(r, 1500));
             }
             stopCamera();
@@ -1509,6 +1591,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             try {
                 const response = await fetch(state.gasUrl, {
                     method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'submit_exam',
                         name: state.playerName,
@@ -1516,6 +1599,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
                         total: totalCount,
                         percentage: percentage,
                         timeTaken: state.timerSeconds,
+                        gpsLocation: state.gpsLocation,
                         videoBase64: videoBase64,
                         details: JSON.stringify(state.examLog)
                     })
@@ -1656,6 +1740,7 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             try {
                 await fetch(state.gasUrl, {
                     method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'save_score', name: state.playerName, points: state.points, answeredTopics: state.answeredTopics, petLevel: state.petLevel })
                 });
             } catch(e) { console.error("Gagal menyimpan data:", e); }
