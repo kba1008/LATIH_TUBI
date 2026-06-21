@@ -1,4 +1,4 @@
-const CACHE_NAME = 'latihai-v6-ms-tts';
+const CACHE_NAME = 'latihai-v5-babyblue-tts';
 const ASSETS = [
   './',
   './index.html',
