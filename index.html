@@ -578,7 +578,7 @@
         }
 
         const AI_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxxGy-KiAijiI_7HKMUwof1UgtxkMfU6_87Pnqw7CdTAHzlGdr-5iOUAQUz6MWjydfFjw/exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxWk4-zamCfoT0CJVSA_BfBdjINh1bSrwvPR59BoBdEXu0Ji9W6jAG2uwh07oHccyaoHg/exec";
 
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
@@ -1806,18 +1806,36 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
 
         function pickVoice(lang) {
             const voices = speechSynthesis.getVoices() || [];
-            // Exact match first
-            let v = voices.find(x => x.lang === lang);
-            if (v) return v;
-            // Prefix match (ms-, en-)
-            const prefix = lang.split('-')[0];
-            v = voices.find(x => x.lang && x.lang.toLowerCase().startsWith(prefix));
-            if (v) return v;
-            // Indonesian as fallback for Malay (very close phonetically)
-            if (prefix === 'ms') {
-                v = voices.find(x => x.lang && x.lang.toLowerCase().startsWith('id'));
+            const prefix = lang.split('-')[0].toLowerCase();
+            const langLower = lang.toLowerCase();
+
+            // Senarai keutamaan suara berkualiti tinggi mengikut bahasa
+            const preferred = {
+                ms: [
+                    /google.*(bahasa\s*melayu|malay)/i,
+                    /microsoft.*(osman|yasmin).*malay/i,
+                    /microsoft.*(osman|yasmin)/i,
+                    /malay/i
+                ],
+                en: [
+                    /google.*us.*english/i,
+                    /google.*english/i,
+                    /microsoft.*(aria|jenny|guy|zira|david)/i,
+                    /english/i
+                ]
+            };
+            const list = preferred[prefix] || [];
+            for (const re of list) {
+                const v = voices.find(x => re.test(x.name) && x.lang && x.lang.toLowerCase().startsWith(prefix));
                 if (v) return v;
             }
+            // Padanan tepat lang code
+            let v = voices.find(x => x.lang && x.lang.toLowerCase() === langLower);
+            if (v) return v;
+            // Padanan awalan
+            v = voices.find(x => x.lang && x.lang.toLowerCase().startsWith(prefix));
+            if (v) return v;
+            // JANGAN guna Indonesian sebagai fallback Melayu - sebutan jadi pelik.
             return null;
         }
 
@@ -1826,21 +1844,84 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices(); } catch(e) {}
         }
 
+        let _currentTTSAudio = null;
         function stopSpeaking() {
             try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch(e) {}
+            if (_currentTTSAudio) {
+                try { _currentTTSAudio.pause(); _currentTTSAudio.src = ''; } catch(e) {}
+                _currentTTSAudio = null;
+            }
             document.querySelectorAll('.tts-btn.tts-playing').forEach(b => b.classList.remove('tts-playing'));
+        }
+
+        // Pecahkan teks panjang kepada chunk <=200 aksara (had Google Translate TTS)
+        function chunkText(text, max) {
+            max = max || 190;
+            const parts = [];
+            const sentences = text.split(/(?<=[\.\!\?\n])\s+/);
+            let buf = '';
+            for (const s of sentences) {
+                if ((buf + ' ' + s).trim().length <= max) {
+                    buf = (buf + ' ' + s).trim();
+                } else {
+                    if (buf) parts.push(buf);
+                    if (s.length <= max) { buf = s; }
+                    else {
+                        // pecahkan ayat panjang ikut koma/ruang
+                        let rem = s;
+                        while (rem.length > max) {
+                            let cut = rem.lastIndexOf(',', max);
+                            if (cut < 40) cut = rem.lastIndexOf(' ', max);
+                            if (cut < 40) cut = max;
+                            parts.push(rem.slice(0, cut).trim());
+                            rem = rem.slice(cut).trim();
+                        }
+                        buf = rem;
+                    }
+                }
+            }
+            if (buf) parts.push(buf);
+            return parts.filter(Boolean);
+        }
+
+        // Sebutan Bahasa Melayu berkualiti tinggi guna Google Translate TTS (audio MP3 sebenar)
+        function speakViaGoogleMS(text, btn, onDone) {
+            const chunks = chunkText(text, 190);
+            let i = 0;
+            const rate = parseFloat(state.ttsRate) || 0.9;
+            const playNext = () => {
+                if (i >= chunks.length) { onDone && onDone(); return; }
+                const url = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=ms&client=tw-ob&q=' + encodeURIComponent(chunks[i]);
+                const a = new Audio(url);
+                a.crossOrigin = 'anonymous';
+                a.playbackRate = Math.max(0.6, Math.min(1.4, rate));
+                _currentTTSAudio = a;
+                a.onended = () => { i++; playNext(); };
+                a.onerror = () => { onDone && onDone(new Error('audio_failed')); };
+                a.play().catch(err => { onDone && onDone(err); });
+            };
+            playNext();
+        }
+
+        function speakViaSynthesis(text, lang, btn) {
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = lang;
+            utter.rate = parseFloat(state.ttsRate) || 0.9;
+            utter.pitch = 1.0;
+            const voice = pickVoice(lang);
+            if (voice) utter.voice = voice;
+            if (btn) {
+                utter.onend = utter.onerror = () => btn.classList.remove('tts-playing');
+            }
+            try { speechSynthesis.speak(utter); } catch(e) { console.warn('TTS error', e); }
         }
 
         function speak(text, btn) {
             if (!state.ttsEnabled) return;
-            if (!('speechSynthesis' in window)) {
-                showCustomAlert("Pelayar anda tidak menyokong fungsi Baca Kuat.", true);
-                return;
-            }
             const clean = String(text || '').replace(/[*_`#>]/g, '').replace(/\s+/g, ' ').trim();
             if (!clean) return;
 
-            // Toggle: if same button is currently playing, stop.
+            // Toggle: jika butang yang sama sedang main, hentikan.
             if (btn && btn.classList.contains('tts-playing')) {
                 stopSpeaking();
                 return;
@@ -1848,17 +1929,32 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             stopSpeaking();
 
             const lang = detectLang(clean);
-            const utter = new SpeechSynthesisUtterance(clean);
-            utter.lang = lang;
-            utter.rate = parseFloat(state.ttsRate) || 0.9;
-            utter.pitch = 1.0;
-            const voice = pickVoice(lang);
-            if (voice) utter.voice = voice;
-            if (btn) {
-                btn.classList.add('tts-playing');
-                utter.onend = utter.onerror = () => btn.classList.remove('tts-playing');
+            if (btn) btn.classList.add('tts-playing');
+
+            // Untuk Bahasa Melayu: cuba Google Translate TTS dulu (sebutan jauh lebih tepat).
+            if (lang === 'ms-MY') {
+                speakViaGoogleMS(clean, btn, (err) => {
+                    if (err) {
+                        // Fallback ke speechSynthesis jika audio gagal (offline/CORS)
+                        if ('speechSynthesis' in window) {
+                            speakViaSynthesis(clean, lang, btn);
+                        } else if (btn) {
+                            btn.classList.remove('tts-playing');
+                        }
+                    } else if (btn) {
+                        btn.classList.remove('tts-playing');
+                    }
+                });
+                return;
             }
-            try { speechSynthesis.speak(utter); } catch(e) { console.warn('TTS error', e); }
+
+            // Untuk BI atau bahasa lain: guna speechSynthesis biasa.
+            if (!('speechSynthesis' in window)) {
+                showCustomAlert("Pelayar anda tidak menyokong fungsi Baca Kuat.", true);
+                if (btn) btn.classList.remove('tts-playing');
+                return;
+            }
+            speakViaSynthesis(clean, lang, btn);
         }
 
         function buildSpeakButton(text, variant, title) {
