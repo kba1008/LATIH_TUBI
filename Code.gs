@@ -60,6 +60,25 @@ function doPost(e) {
       if (!currentB4) settingsSheet.getRange("B4").setValue("sederhana");
     }
     var globalDifficulty = settingsSheet.getRange("B4").getValue() || "sederhana";
+
+    // Check for TTS_ENABLED row (Read Aloud toggle)
+    var a5Val = settingsSheet.getRange("A5").getValue();
+    if (a5Val !== "TTS_ENABLED") {
+      settingsSheet.getRange("A5").setValue("TTS_ENABLED");
+      var currentB5 = settingsSheet.getRange("B5").getValue();
+      if (currentB5 === "" || currentB5 === null) settingsSheet.getRange("B5").setValue("true");
+    }
+    var ttsEnabledRaw = settingsSheet.getRange("B5").getValue();
+    var ttsEnabled = (ttsEnabledRaw === true || String(ttsEnabledRaw).toLowerCase() === "true");
+
+    // Check for TTS_RATE row (Read Aloud speed: 0.5 - 1.5)
+    var a6Val = settingsSheet.getRange("A6").getValue();
+    if (a6Val !== "TTS_RATE") {
+      settingsSheet.getRange("A6").setValue("TTS_RATE");
+      var currentB6 = settingsSheet.getRange("B6").getValue();
+      if (!currentB6) settingsSheet.getRange("B6").setValue("0.9");
+    }
+    var ttsRate = parseFloat(settingsSheet.getRange("B6").getValue()) || 0.9;
     
     var inactiveSetsStr = settingsSheet.getRange("B2").getValue();
     var inactiveSets = [];
@@ -136,7 +155,9 @@ function doPost(e) {
         answeredTopics: answeredTopics,
         petLevel: petLevel,
         globalMode: globalMode,
-        globalDifficulty: globalDifficulty
+        globalDifficulty: globalDifficulty,
+        ttsEnabled: ttsEnabled,
+        ttsRate: ttsRate
       });
     }
     
@@ -233,6 +254,16 @@ function doPost(e) {
       if (data.task === "set_settings") {
         settingsSheet.getRange("B1").setValue(data.mode);
         settingsSheet.getRange("B4").setValue(data.difficulty);
+        if (data.ttsEnabled !== undefined) {
+          settingsSheet.getRange("B5").setValue(data.ttsEnabled ? "true" : "false");
+        }
+        if (data.ttsRate !== undefined) {
+          var r = parseFloat(data.ttsRate);
+          if (isNaN(r)) r = 0.9;
+          if (r < 0.5) r = 0.5;
+          if (r > 1.5) r = 1.5;
+          settingsSheet.getRange("B6").setValue(r);
+        }
         return createJsonResponse({ success: true });
       }
       

@@ -114,6 +114,18 @@
             -ms-user-select: none;
             user-select: none;
         }
+
+        /* Text-to-Speech (Baca Kuat) buttons */
+        .tts-btn { cursor: pointer; line-height: 1; }
+        .tts-btn.tts-playing {
+            background-color: #4f46e5 !important;
+            color: #ffffff !important;
+            animation: ttsPulse 1s ease-in-out infinite;
+        }
+        @keyframes ttsPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(79,70,229,0.5); }
+            50% { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(79,70,229,0); }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-100 via-fuchsia-50 to-cyan-100 min-h-screen text-slate-800 flex flex-col prevent-select">
@@ -467,6 +479,32 @@
                     </div>
                 </div>
 
+                <div class="bg-white/60 p-5 rounded-2xl border-2 border-white mt-4">
+                    <label class="block text-base font-bold mb-3 text-slate-800 flex items-center gap-2"><i data-lucide="volume-2" class="w-5 h-5"></i> Baca Kuat (Text-to-Speech)</label>
+                    <div class="flex items-center justify-between p-3 bg-white rounded-xl border-2 border-slate-100 mb-3">
+                        <div>
+                            <p class="font-bold text-slate-800">Aktifkan Butang Baca</p>
+                            <p class="text-xs text-slate-500 font-medium">Pelajar boleh dengar nota, soalan & pilihan jawapan (BM/EN).</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="adminTtsEnabled" class="sr-only peer">
+                            <div class="w-12 h-7 bg-slate-300 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition peer-checked:bg-indigo-600"></div>
+                        </label>
+                    </div>
+                    <div class="p-3 bg-white rounded-xl border-2 border-slate-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="font-bold text-slate-800 text-sm">Kelajuan Bacaan</p>
+                            <span id="adminTtsRateLabel" class="font-black text-indigo-600 text-sm">0.9x</span>
+                        </div>
+                        <input type="range" id="adminTtsRate" min="0.5" max="1.5" step="0.05" value="0.9"
+                            class="w-full h-2 bg-indigo-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                            oninput="document.getElementById('adminTtsRateLabel').textContent = parseFloat(this.value).toFixed(2) + 'x'">
+                        <div class="flex justify-between text-xs text-slate-500 font-bold mt-1">
+                            <span>Perlahan</span><span>Normal</span><span>Pantas</span>
+                        </div>
+                    </div>
+                </div>
+
                 <button onclick="saveSettings()" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 md:py-4 rounded-2xl transition shadow-xl shadow-indigo-600/30 text-lg">
                     Simpan Tetapan
                 </button>
@@ -613,7 +651,9 @@
             timerInterval: null,
             mediaRecorder: null,
             recordedChunks: [],
-            gpsLocation: null
+            gpsLocation: null,
+            ttsEnabled: (sessionStorage.getItem('ttsEnabled') !== 'false'),
+            ttsRate: parseFloat(sessionStorage.getItem('ttsRate')) || 0.9
         };
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -989,6 +1029,9 @@
                     document.getElementById('gasUrlInput').value = state.gasUrl;
                     document.querySelector(`input[name="adminMode"][value="${state.globalMode}"]`).checked = true;
                     document.querySelector(`input[name="adminDifficulty"][value="${state.globalDifficulty}"]`).checked = true;
+                    document.getElementById('adminTtsEnabled').checked = !!state.ttsEnabled;
+                    document.getElementById('adminTtsRate').value = state.ttsRate;
+                    document.getElementById('adminTtsRateLabel').textContent = parseFloat(state.ttsRate).toFixed(2) + 'x';
                     document.getElementById('adminStudentList').classList.add('hidden');
                     renderAdminSets();
                     document.getElementById('settingsModal').classList.remove('hidden');
@@ -1007,20 +1050,28 @@
             localStorage.setItem('gasUrl', state.gasUrl);
             const selectedMode = document.querySelector('input[name="adminMode"]:checked').value;
             const selectedDiff = document.querySelector('input[name="adminDifficulty"]:checked').value;
+            const ttsEnabled = document.getElementById('adminTtsEnabled').checked;
+            const ttsRate = parseFloat(document.getElementById('adminTtsRate').value) || 0.9;
             
             try {
                 const response = await fetch(state.gasUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'admin_action', adminPwd: '101010', task: 'set_settings', mode: selectedMode, difficulty: selectedDiff })
+                    body: JSON.stringify({ action: 'admin_action', adminPwd: '101010', task: 'set_settings', mode: selectedMode, difficulty: selectedDiff, ttsEnabled: ttsEnabled, ttsRate: ttsRate })
                 });
                 const data = await response.json();
                 if(!data.success) throw new Error(data.error);
                 
                 state.globalMode = selectedMode;
                 state.globalDifficulty = selectedDiff;
+                state.ttsEnabled = ttsEnabled;
+                state.ttsRate = ttsRate;
                 sessionStorage.setItem('globalMode', state.globalMode);
                 sessionStorage.setItem('globalDifficulty', state.globalDifficulty);
+                sessionStorage.setItem('ttsEnabled', state.ttsEnabled ? 'true' : 'false');
+                sessionStorage.setItem('ttsRate', String(state.ttsRate));
+                if (!state.ttsEnabled) stopSpeaking();
+                refreshTtsButtons();
                 updateModeIndicator();
                 showCustomAlert("Tetapan berjaya disimpan ke pelayan!");
                 closeSettings();
@@ -1209,6 +1260,7 @@
         }
 
         function goToSetSelection() {
+            stopSpeaking();
             if (state.timerInterval && state.globalMode === 'peperiksaan') {
                 showCustomConfirm(
                     "Keluar ke Menu?", 
@@ -1337,6 +1389,15 @@
                     state.globalDifficulty = data.globalDifficulty;
                     sessionStorage.setItem('globalDifficulty', state.globalDifficulty);
                 }
+                if(data.ttsEnabled !== undefined) {
+                    state.ttsEnabled = !!data.ttsEnabled;
+                    sessionStorage.setItem('ttsEnabled', state.ttsEnabled ? 'true' : 'false');
+                }
+                if(data.ttsRate !== undefined) {
+                    state.ttsRate = parseFloat(data.ttsRate) || 0.9;
+                    sessionStorage.setItem('ttsRate', String(state.ttsRate));
+                }
+                refreshTtsButtons();
 
                 if(data.userPoints !== undefined) {
                     state.points = data.userPoints;
@@ -1621,6 +1682,7 @@
         }
 
         async function generateNextQuestion() {
+            stopSpeaking();
             showScreen('loadingScreen');
             document.getElementById('loadingText').textContent = "Cikgu AI Sedang Berfikir...";
             
@@ -1727,13 +1789,128 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             }
         }
 
+        // ===== TEXT-TO-SPEECH (Baca Kuat) =====
+        // Auto detect English vs Bahasa Melayu. Ratio of common English stopwords
+        // and ASCII-only words decides the voice language used.
+        const TTS_EN_HINTS = /\b(the|is|are|was|were|and|or|of|to|in|on|for|with|that|this|what|which|who|how|why|when|where|a|an|you|your|it|its|be|have|has|do|does|not|but|if|then|than|from|by|as|at|because|so|can|could|should|would|will)\b/gi;
+        function detectLang(text) {
+            if (!text) return 'ms-MY';
+            const t = String(text).trim();
+            if (!t) return 'ms-MY';
+            const enMatches = (t.match(TTS_EN_HINTS) || []).length;
+            const words = t.split(/\s+/).filter(Boolean).length || 1;
+            // If >= 25% English hint words OR text is pure ASCII English-looking and has english hints
+            if (enMatches / words >= 0.25) return 'en-US';
+            return 'ms-MY';
+        }
+
+        function pickVoice(lang) {
+            const voices = speechSynthesis.getVoices() || [];
+            // Exact match first
+            let v = voices.find(x => x.lang === lang);
+            if (v) return v;
+            // Prefix match (ms-, en-)
+            const prefix = lang.split('-')[0];
+            v = voices.find(x => x.lang && x.lang.toLowerCase().startsWith(prefix));
+            if (v) return v;
+            // Indonesian as fallback for Malay (very close phonetically)
+            if (prefix === 'ms') {
+                v = voices.find(x => x.lang && x.lang.toLowerCase().startsWith('id'));
+                if (v) return v;
+            }
+            return null;
+        }
+
+        // Warm-up voice list (some browsers load async)
+        if ('speechSynthesis' in window) {
+            try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices(); } catch(e) {}
+        }
+
+        function stopSpeaking() {
+            try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch(e) {}
+            document.querySelectorAll('.tts-btn.tts-playing').forEach(b => b.classList.remove('tts-playing'));
+        }
+
+        function speak(text, btn) {
+            if (!state.ttsEnabled) return;
+            if (!('speechSynthesis' in window)) {
+                showCustomAlert("Pelayar anda tidak menyokong fungsi Baca Kuat.", true);
+                return;
+            }
+            const clean = String(text || '').replace(/[*_`#>]/g, '').replace(/\s+/g, ' ').trim();
+            if (!clean) return;
+
+            // Toggle: if same button is currently playing, stop.
+            if (btn && btn.classList.contains('tts-playing')) {
+                stopSpeaking();
+                return;
+            }
+            stopSpeaking();
+
+            const lang = detectLang(clean);
+            const utter = new SpeechSynthesisUtterance(clean);
+            utter.lang = lang;
+            utter.rate = parseFloat(state.ttsRate) || 0.9;
+            utter.pitch = 1.0;
+            const voice = pickVoice(lang);
+            if (voice) utter.voice = voice;
+            if (btn) {
+                btn.classList.add('tts-playing');
+                utter.onend = utter.onerror = () => btn.classList.remove('tts-playing');
+            }
+            try { speechSynthesis.speak(utter); } catch(e) { console.warn('TTS error', e); }
+        }
+
+        function buildSpeakButton(text, variant, title) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'tts-btn inline-flex items-center justify-center rounded-full bg-indigo-100 hover:bg-indigo-200 text-indigo-700 transition shadow-sm border-2 border-white align-middle';
+            if (variant === 'inline-question') {
+                btn.className += ' w-10 h-10 md:w-12 md:h-12 mr-2 text-xl';
+            } else if (variant === 'option-speak') {
+                btn.className += ' w-9 h-9 md:w-10 md:h-10 ml-2 flex-shrink-0 text-base';
+            } else {
+                btn.className += ' w-9 h-9 text-base';
+            }
+            btn.title = title || 'Baca Kuat';
+            btn.setAttribute('aria-label', title || 'Baca Kuat');
+            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
+            btn.onclick = (e) => { e.stopPropagation(); e.preventDefault(); speak(text, btn); };
+            if (!state.ttsEnabled) btn.classList.add('hidden');
+            return btn;
+        }
+
+        function attachSpeakButton(containerEl, text, position, title) {
+            // Remove old speaker if any
+            const old = containerEl.querySelector(':scope > .tts-btn-wrapper');
+            if (old) old.remove();
+            const wrap = document.createElement('div');
+            wrap.className = 'tts-btn-wrapper flex justify-end mb-2';
+            wrap.appendChild(buildSpeakButton(text, 'block', title));
+            containerEl.insertBefore(wrap, containerEl.firstChild);
+        }
+
+        function refreshTtsButtons() {
+            document.querySelectorAll('.tts-btn').forEach(b => {
+                if (state.ttsEnabled) b.classList.remove('hidden');
+                else b.classList.add('hidden');
+            });
+            if (!state.ttsEnabled) stopSpeaking();
+        }
+
         function renderQuiz() {
             const nameDisplay = document.getElementById('currentSetNameDisplay');
             nameDisplay.textContent = state.currentSet;
             nameDisplay.classList.remove('hidden');
 
-            document.getElementById('preNoteText').innerHTML = parseMarkdown(state.currentQuiz.nota).replace(/\n/g, '<br>');
-            document.getElementById('questionText').textContent = state.currentQuiz.soalan;
+            const notaEl = document.getElementById('preNoteText');
+            notaEl.innerHTML = parseMarkdown(state.currentQuiz.nota).replace(/\n/g, '<br>');
+            attachSpeakButton(notaEl, state.currentQuiz.nota, 'top-right', 'Dengar Nota');
+
+            const qTextEl = document.getElementById('questionText');
+            qTextEl.textContent = '';
+            qTextEl.appendChild(buildSpeakButton(state.currentQuiz.soalan, 'inline-question', 'Dengar Soalan'));
+            qTextEl.appendChild(document.createTextNode(' ' + state.currentQuiz.soalan));
             
             const container = document.getElementById('optionsContainer');
             container.innerHTML = '';
@@ -1741,11 +1918,15 @@ Berikan maklum balas HANYA dalam format JSON yang sah seperti struktur di bawah,
             state.currentQuiz.pilihan.forEach((opt, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'w-full h-full text-left p-4 md:p-6 rounded-3xl glass-button font-extrabold text-lg md:text-xl option-btn flex items-center gap-4 transition-all duration-300 shadow-md hover:shadow-2xl border-2 border-white/80';
-                btn.innerHTML = `<span class="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center rounded-2xl bg-white text-indigo-600 font-black shadow-md border-4 border-indigo-50 text-xl md:text-3xl">${letters[index]}</span> <span class="leading-relaxed text-slate-700 font-bold ml-2">${opt}</span>`;
+                const safeOpt = String(opt).replace(/</g, '&lt;');
+                btn.innerHTML = `<span class="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center rounded-2xl bg-white text-indigo-600 font-black shadow-md border-4 border-indigo-50 text-xl md:text-3xl">${letters[index]}</span> <span class="leading-relaxed text-slate-700 font-bold ml-2 flex-grow">${safeOpt}</span>`;
                 btn.onclick = () => handleAnswer(index, btn);
+                const optionSpeak = buildSpeakButton(letters[index] + '. ' + opt, 'option-speak', 'Dengar Pilihan ' + letters[index]);
+                btn.appendChild(optionSpeak);
                 container.appendChild(btn);
             });
             lucide.createIcons();
+            refreshTtsButtons();
         }
 
         function showQuestionArea() {
